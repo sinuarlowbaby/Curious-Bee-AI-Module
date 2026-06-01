@@ -1,0 +1,26 @@
+#SET-UP 
+Install ollama model into your system 
+then run 'ollama pull phi3' in your VS code terminal 
+then start your ollama server by running this command in terminal 'ollama serve'
+
+#FLOW DIAGRAM 
+Email arrives
+     │
+     ▼
+Ollama Phi-3 analyzes
+     │
+     ├── "announcement" ──→ Skip
+     │
+     ├── "event" ─────────→ Add to calendar.json
+     │                       (one entry per date)
+     │
+     └── "reschedule" ────→ Semantic search calendar.json
+                                │
+                                ├── Match found ──→ Update old date → new date
+                                │
+                                └── No match ────→ Add as new (flagged)
+
+#TOOLS/MODELS USED
+1. Ollama Phi-3
+2. SentenceTransformer(all-MiniLM-L6-v2)
+3. 
