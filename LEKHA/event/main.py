@@ -321,8 +321,14 @@ print("Connected.\n")
 # FETCH UNREAD EMAILS
 # =========================================================
 
-status, messages = mail.search(None, "UNSEEN")
-email_ids = messages[0].split()
+try:
+    status, messages = mail.search(None, "UNSEEN")
+    email_ids = messages[0].split()
+except imaplib.IMAP4.abort as e:
+    print(f"\n[!] IMAP connection aborted by server: {e}")
+    print("    This usually happens due to rate-limiting when running the script too frequently.")
+    import sys
+    sys.exit(1)
 
 print(f"Found {len(email_ids)} unread email(s)\n")
 print("=" * 50)

@@ -16,5 +16,11 @@
         "subject": "=?UTF-8?Q?Cancellation_=E2=80=93_Workshop_on_Cyber_Security_and_Ethi?=\r\n\t=?UTF-8?Q?cal_Hacking?=",
         "description": "The workshop scheduled on June 18, 2026 has been cancelled due to unavoidable circumstances. A new date will be announced shortly.",
         "received_on": "2026-06-01"
+    },
+    {
+        "sender": "lekhalokare.28@gmail.com",
+        "subject": "Internal Assessment Marks Submission Deadline",
+        "description": "Please submit Internal Assessment marks for the odd semester 2026 before July 10, 2026. Marks submitted after this date will be locked by the system.",
+        "received_on": "2026-06-01"
     }
 ]
