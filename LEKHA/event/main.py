@@ -12,16 +12,16 @@ import json
 import os
 import datetime
 
-import ollama
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from sentence_transformers import SentenceTransformer, util
-from groq import Groq
+from langchain_ollama import ChatOllama
+# from groq import Groq
 
 load_dotenv()
 #USING API KEY 
 # groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-
+llm_client=ChatOllama(model="qwen2.5:1.5b")
 # =========================================================
 # CONFIGURATION
 # =========================================================
@@ -113,7 +113,7 @@ def add_event(entry):
     print(f"  [ADDED]   '{entry['title']}' on {entry['date']}")
 
 
-def update_event(old_entry, new_dates, new_time, new_venue, new_description):
+def update_event(old_entry, new_dates, new_time, new_venue):
     """
     Remove all old calendar entries for this event title + old date,
     then insert new entries with updated dates.
@@ -135,13 +135,29 @@ def update_event(old_entry, new_dates, new_time, new_venue, new_description):
             "title":       old_entry["title"],
             "date":        date,
             "time":        new_time        or old_entry.get("time"),
-            "venue":       new_venue       or old_entry.get("venue"),
-            "description": new_description or old_entry.get("description")
+            "venue":       new_venue       or old_entry.get("venue")
         }
         calendar.append(new_entry)
         print(f"  [UPDATED] '{old_entry['title']}' — {old_entry['date']} → {date}")
 
     save_calendar(calendar)
+
+
+def delete_event(old_entry):
+    """
+    Remove all old calendar entries for this event title + old date.
+    """
+    calendar = load_calendar()
+
+    calendar = [
+        e for e in calendar
+        if not (
+            e["title"] == old_entry["title"] and
+            e["date"]  == old_entry["date"]
+        )
+    ]
+    save_calendar(calendar)
+    print(f"  [DELETED] '{old_entry['title']}' on {old_entry['date']}")
 
 
 # =========================================================
@@ -192,6 +208,7 @@ def analyze_email(body, subject):
 Analyze the email below and classify it as exactly one of:
 - "event"        → an invitation to attend something (talk, seminar, workshop, fest, sports event, meeting, competition)
 - "reschedule"   → an existing event has been postponed or rescheduled to a new date
+- "cancellation" → an existing event has been cancelled
 - "announcement" → a general notice, policy update, holiday notice, result declaration, or information with no event to attend
  
 ────────────────────────────────────────
@@ -204,7 +221,6 @@ For "event" extract:
   - "old_dates"   : [] (empty list — this is a new event)
   - "time"        : start time of the event e.g. "09:30 AM", or null if not mentioned
   - "venue"       : full venue name, or null if not mentioned
-  - "description" : one concise sentence summarizing the event
  
 For "reschedule" extract:
   - "event"       : full name/title of the event (same as the original event name)
@@ -212,7 +228,14 @@ For "reschedule" extract:
   - "old_dates"   : the PREVIOUS date(s) in YYYY-MM-DD that are being replaced
   - "time"        : new time if mentioned, else null
   - "venue"       : new venue if changed, else null
-  - "description" : one sentence explaining what changed (e.g. "Rescheduled from June 15 to June 22 due to holiday")
+ 
+For "cancellation" extract:
+  - "event"       : full name/title of the cancelled event
+  - "dates"       : []
+  - "old_dates"   : the original date(s) of the event being cancelled in YYYY-MM-DD
+  - "time"        : null
+  - "venue"       : null
+  - "description" : one sentence explaining the cancellation
  
 For "announcement" extract:
   - "event"       : null
@@ -242,12 +265,9 @@ Body:
 """
  
     try:
-        response = ollama.chat(
-            model="phi3",
-            messages=[{"role": "user", "content": prompt}]
-        )
+        response = llm_client.invoke(prompt)
  
-        raw   = response['message']['content']
+        raw   = response.content
         clean = re.sub(r"```json|```", "", raw).strip()
  
         result = json.loads(clean)
@@ -257,6 +277,11 @@ Body:
             result["dates"] = []
         if not isinstance(result.get("old_dates"), list):
             result["old_dates"] = []
+            
+        # Sanitize - ensure string keys exist to prevent KeyErrors
+        for key in ["event", "time", "venue", "description"]:
+            if key not in result:
+                result[key] = None
  
         return result
  
@@ -404,8 +429,7 @@ for email_id in email_ids:
                     "title":       result["event"],
                     "date":        date,
                     "time":        result["time"],
-                    "venue":       result["venue"],
-                    "description": result["description"]
+                    "venue":       result["venue"]
                 }
                 add_event(entry)
 
@@ -431,21 +455,49 @@ for email_id in email_ids:
                 old_entry       = match,
                 new_dates       = result["dates"],
                 new_time        = result["time"],
-                new_venue       = result["venue"],
-                new_description = result["description"]
+                new_venue       = result["venue"]
             )
         else:
             # No confident match found — add as new entry but flag it
             print("  No existing event matched — adding as new entry (flagged)")
             for date in result["dates"]:
                 entry = {
-                    "title":       result["event"],
+                    "title":       f"[POSSIBLY RESCHEDULED] {result['event']}",
                     "date":        date,
                     "time":        result["time"],
-                    "venue":       result["venue"],
-                    "description": f"[POSSIBLY RESCHEDULED] {result['description']}"
+                    "venue":       result["venue"]
                 }
                 add_event(entry)
+
+    # ==================================================
+    # HANDLE: CANCELLED EVENT → Delete from calendar.json
+    # ==================================================
+
+    elif result["type"] == "cancellation":
+
+        print("CANCELLATION DETECTED — searching calendar for matching event...")
+
+        match = find_matching_event(
+            event_name = result["event"],
+            old_dates  = result["old_dates"]
+        )
+
+        print()
+        print("CALENDAR ACTIONS:")
+
+        if match:
+            print(f"  Matched: '{match['title']}' on {match['date']} — deleting.")
+            delete_event(match)
+        else:
+            print("  No existing event matched for cancellation.")
+            
+        print()
+        print("ANNOUNCEMENT ACTIONS:")
+        save_announcement(
+            sender_email = sender_email,
+            subject      = subject,
+            description  = result.get("description")
+        )
 
     # ==================================================
     # HANDLE: ANNOUNCEMENT → Save to announcements.json

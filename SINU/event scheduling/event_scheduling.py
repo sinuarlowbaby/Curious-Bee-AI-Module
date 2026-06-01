@@ -15,8 +15,8 @@ client = AsyncOpenAI(
 @traceable(name="retrive email", run_type="tool")
 def read_mail():
 
-    EMAIL = os.getenv("GMAIL_EMAIL")
-    APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
+    EMAIL = "srmdean02@gmail.com"
+    APP_PASSWORD = "xewwthmnlnctavwe"
     imap = imaplib.IMAP4_SSL("imap.gmail.com")
     imap.login(EMAIL, APP_PASSWORD)
 
