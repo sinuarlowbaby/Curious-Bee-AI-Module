@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Research Login Page</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+  <style>
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:'Poppins', sans-serif;
+    }
+
+    body{
+      width:100%;
+      height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      background:#f3f3f3;
+    }
+
+    .container{
+      width:500px;
+      height:760px;
+      background:#fff;
+      border-radius:30px;
+      box-shadow:0 15px 40px rgba(0,0,0,0.15);
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      padding:40px;
+    }
+
+    .logo img{
+      width:220px;
+      margin-bottom:20px;
+    }
+
+    h1{
+      text-align:center;
+      font-size:28px;
+      font-weight:700;
+      color:#111;
+      line-height:1.5;
+      margin-bottom:20px;
+    }
+
+    .description{
+      text-align:center;
+      color:#333;
+      font-size:18px;
+      line-height:1.7;
+      margin-bottom:50px;
+      max-width:400px;
+    }
+
+    .signin-text{
+      font-size:22px;
+      font-weight:700;
+      color:#111;
+      margin-bottom:25px;
+    }
+
+    .google-btn{
+      background:#df9a34;
+      border:none;
+      border-radius:14px;
+      padding:14px 35px;
+      font-size:18px;
+      color:white;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      cursor:pointer;
+      transition:0.3s;
+    }
+
+    .google-btn:hover{
+      background:#c8872c;
+      transform:scale(1.03);
+    }
+
+    .google-btn i{
+      font-size:20px;
+    }
+
+    @media(max-width:600px){
+      .container{
+        width:90%;
+        height:auto;
+        padding:30px 20px;
+      }
+
+      h1{
+        font-size:22px;
+      }
+
+      .description{
+        font-size:15px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <!-- Logo -->
+    <div class="logo">
+      <!-- Replace logo.png with your image -->
+      <img src="logo.png" alt="Logo">
+    </div>
+
+    <!-- Heading -->
+    <h1>
+      Explore, share and ignite your new research
+    </h1>
+
+    <!-- Description -->
+    <p class="description">
+      "Dive into the Depths of Discovery: Unleash the Power
+      of Research at your Fingertips"
+    </p>
+
+    <!-- Sign in -->
+    <div class="signin-text">
+      Sign In with Google
+    </div>
+
+    <!-- Button -->
+    <button class="google-btn">
+      <i class="fa-brands fa-google"></i>
+      Google
+    </button>
+
+  </div>
+
+</body>
+</html>

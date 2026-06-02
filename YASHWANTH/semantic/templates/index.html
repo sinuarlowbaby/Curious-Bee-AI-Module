@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ResearchHub</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+        }
+
+        .navbar {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 15px 40px;
+            background: #1e293b;
+            color: white;
+        }
+
+        .navbar h2 {
+            margin-right: auto;
+        }
+
+        .navbar input {
+            width: 430px;
+            padding: 12px;
+            border: none;
+            border-radius: 25px;
+            outline: none;
+        }
+
+        .navbar button {
+            padding: 12px 22px;
+            border: none;
+            border-radius: 25px;
+            background: #38bdf8;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 220px 1fr 250px;
+            gap: 20px;
+            padding: 25px;
+        }
+
+        .sidebar,
+        .feed,
+        .rightbar {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .sidebar p,
+        .rightbar p {
+            background: #e0f2fe;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: #0f172a;
+        }
+
+        .author {
+            color: #475569;
+            font-weight: bold;
+        }
+
+        .tags {
+            color: #0284c7;
+            font-weight: bold;
+        }
+
+        .search-type {
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #334155;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="navbar">
+        <h2>ResearchHub</h2>
+
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="🔍 Search papers, topics, researchers..."
+        >
+
+        <button onclick="searchPapers()">Search</button>
+    </div>
+
+    <div class="container">
+
+        <div class="sidebar">
+            <h3>Trending Tags</h3>
+            <p>#AI</p>
+            <p>#ML</p>
+            <p>#Agriculture</p>
+            <p>#IoT</p>
+            <p>#ComputerVision</p>
+        </div>
+
+        <div class="feed">
+            <h2>Research Feed</h2>
+            <div id="searchType"></div>
+            <div id="results"></div>
+        </div>
+
+        <div class="rightbar">
+            <h3>Suggested Experts</h3>
+            <p>👤 Dr. Kumar</p>
+            <p>👤 Dr. Priya</p>
+            <p>👤 Dr. Raj</p>
+
+            <h3>Trending Research</h3>
+            <p>#Agriculture</p>
+            <p>#DeepLearning</p>
+            <p>#ComputerVision</p>
+        </div>
+
+    </div>
+
+    <script>
+        async function searchPapers() {
+            const query = document.getElementById("searchInput").value;
+
+            if (query.trim() === "") {
+                alert("Please enter a search query");
+                return;
+            }
+
+            const response = await fetch("/search", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    query: query
+                })
+            });
+
+            const data = await response.json();
+
+            document.getElementById("searchType").innerHTML =
+                `<p class="search-type">Search Type: ${data.search_type}</p>`;
+
+            displayResults(data.results);
+        }
+
+        function displayResults(results) {
+            const resultsDiv = document.getElementById("results");
+
+            resultsDiv.innerHTML = "";
+
+            results.forEach(post => {
+                resultsDiv.innerHTML += `
+                    <div class="card">
+                        <h3>📄 ${post.title}</h3>
+                        <p class="author">👤 ${post.author}</p>
+                        <p>${post.description}</p>
+                        <p class="tags">
+                            ${post.tags.map(tag => "#" + tag).join(" ")}
+                        </p>
+                        <p>❤️ ${post.likes} &nbsp; 💬 ${post.comments} &nbsp; 🔖 Save</p>
+                    </div>
+                `;
+            });
+        }
+    </script>
+
+</body>
+</html>
