@@ -400,6 +400,16 @@ body::before{
 }
 .btn-download:hover{background:var(--amber2);}
 
+/* ─── DELETE BTN ─────────────────────────────── */
+.btn-danger{
+  padding:8px 18px;
+  background:transparent;color:var(--red);
+  border:1px solid var(--red);border-radius:var(--radius-sm);
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;
+  cursor:pointer;transition:all .15s;margin-left:auto;
+}
+.btn-danger:hover{background:var(--red-bg);border-color:var(--red);}
+
 /* ─── SCROLLBAR ──────────────────────────── */
 ::-webkit-scrollbar{width:6px;}
 ::-webkit-scrollbar-track{background:var(--bg1);}
@@ -590,9 +600,18 @@ body::before{
 
     <!-- ── VIEWER PAGE ── -->
     <div class="page" id="page-viewer">
-      <div class="viewer-back" onclick="showPage('search')">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5m0 0 7-7m-7 7 7 7"/></svg>
-        Back to search
+      <!-- hidden: stores the current post's SQLite id for delete -->
+      <span id="vw-post-id" data-id=""></span>
+
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px;">
+        <div class="viewer-back" onclick="showPage('search')" style="margin-bottom:0">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5m0 0 7-7m-7 7 7 7"/></svg>
+          Back to search
+        </div>
+        <!-- <button class="btn-danger" id="btn-delete-post" onclick="deletePost()">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:5px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6m4-6v6"/><path d="M9 6V4h6v2"/></svg>
+          Delete post
+        </button> -->
       </div>
 
       <div class="viewer-hero">
@@ -650,11 +669,14 @@ function showPage(id) {
 }
 
 function openViewer(post) {
+  document.getElementById('vw-post-id').dataset.id = post.id ?? '';
   document.getElementById('vw-tag').textContent = post.tag || 'Research';
   document.getElementById('vw-title').textContent = post.title;
   document.getElementById('vw-author-text').textContent = post.author || 'Anonymous';
   document.getElementById('vw-date-text').textContent = post.date;
   document.getElementById('vw-abstract').textContent = post.abstract || 'No abstract provided.';
+  // Show delete button only if post has a known SQLite id
+  document.getElementById('btn-delete-post').style.display = post.id ? 'inline-flex' : 'none';
   const pdfSec = document.getElementById('vw-pdf-section');
   if (post.hasPdf) {
     pdfSec.style.display = 'block';
@@ -668,6 +690,34 @@ function openViewer(post) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.querySelector('.main').scrollTop = 0;
 }
+
+// ── DELETE POST ─────────────────────────────────────────────────
+<!-- ── 
+  async function deletePost() {
+  const postId = document.getElementById('vw-post-id').dataset.id;
+  if (!postId) return;
+
+  const title = document.getElementById('vw-title').textContent;
+  if (!confirm(`Delete "${title}"?\n\nThis will remove it from SQLite and Qdrant permanently.`)) return;
+
+  try {
+    const res = await fetch(`/posts/${postId}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const err = await res.json();
+      alert('Delete failed: ' + (err.detail || res.status));
+      return;
+    }
+    // Remove from local posts array
+    posts = posts.filter(p => String(p.id) !== String(postId));
+    updateSidebar();
+    updateCount();
+    showPage('search');
+  } catch (err) {
+    console.error('Delete error:', err);
+    alert('Network error while deleting.');
+  }
+}
+-->
 
 // ── DROP ZONE ───────────────────────────────
 function handleDragOver(e) {
@@ -730,26 +780,28 @@ function handleSubmit() {
   updateSidebar();
   updateCount();
 
-  // Send the post to Qdrant vector database
-  fetch('/add_vector', {
+  // Save post to SQLite + index in Qdrant
+  fetch('/update_db', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      title: post.title,
-      author: post.author,
-      tag: post.tag,
+      title:    post.title,
+      author:   post.author,
+      tag:      post.tag,
       abstract: post.abstract || '',
-      date: post.date
+      date:     post.date,
+      ts:       post.ts        // epoch ms — stored in SQLite for sorting
     })
   })
   .then(res => res.json())
   .then(data => {
-    console.log('Successfully indexed in Qdrant:', data);
+    console.log('Saved to SQLite + Qdrant:', data);
+    if (data.id) post.id = data.id;  // update local post with SQLite id
   })
   .catch(err => {
-    console.error('Error indexing in Qdrant:', err);
+    console.error('Error saving post:', err);
   });
 
   // Reset form
@@ -928,7 +980,8 @@ async function initApp() {
   try {
     const res = await fetch('/posts');
     const data = await res.json();
-    posts = data;
+    // Normalise server posts — they won't have PDF info
+    posts = data.map(p => ({ ...p, hasPdf: false, pdfName: null, pdfSize: null }));
     updateSidebar();
     updateCount();
     renderPosts('');

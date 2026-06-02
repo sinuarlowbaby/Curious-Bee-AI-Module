@@ -94,5 +94,41 @@
         "date": "2026-06-08",
         "time": null,
         "venue": "SRM Institute of Science and Technology, Kattankulathur - 603203"
+    },
+    {
+        "title": "Workshop on Cyber Security and Ethical Hacking",
+        "date": "2026-06-05",
+        "time": "09:30 AM",
+        "venue": "IT Seminar Hall"
+    },
+    {
+        "title": "Workshop on Cyber Security and Ethical Hacking",
+        "date": "2026-06-18",
+        "time": "09:30 AM",
+        "venue": "IT Seminar Hall"
+    },
+    {
+        "title": "Seminar on Artificial Intelligence and Future Technologies",
+        "date": "2026-06-20",
+        "time": "10:00 AM",
+        "venue": "Seminar Hall"
+    },
+    {
+        "title": "Technovanza 2026",
+        "date": "2026-07-10",
+        "time": "09:00 AM",
+        "venue": "Main Auditorium"
+    },
+    {
+        "title": "Technovanza 2026",
+        "date": "2026-07-12",
+        "time": "09:00 AM",
+        "venue": "Main Auditorium"
+    },
+    {
+        "title": "Environmental Day 2026",
+        "date": "2026-06-01",
+        "time": "2:59 PM",
+        "venue": "SRMIST"
     }
 ]

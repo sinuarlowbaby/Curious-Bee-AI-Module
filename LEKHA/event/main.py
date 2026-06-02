@@ -11,6 +11,7 @@ import re
 import json
 import os
 import datetime
+import dateutil.parser
 
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
@@ -21,7 +22,21 @@ from langchain_ollama import ChatOllama
 load_dotenv()
 #USING API KEY 
 # groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-llm_client=ChatOllama(model="qwen2.5:1.5b")
+# llm_client=ChatOllama(model="qwen2.5:1.5b")
+
+from gliner import GLiNER
+
+model = GLiNER.from_pretrained(
+    "urchade/gliner_small-v2.1"
+)
+
+labels = [
+    "event",
+    "date",
+    "time",
+    "venue"
+]
+
 # =========================================================
 # CONFIGURATION
 # =========================================================
@@ -198,106 +213,80 @@ def save_announcement(sender_email, subject, description):
 
 def analyze_email(body, subject):
     """
-    Send email body + subject to local Phi-3 model.
+    Send email body + subject to GLiNER model.
     Returns a structured dict with type, event details,
     dates, old_dates, time, venue, description.
     """
- 
-    prompt = f"""You are an intelligent email analyzer for a university.
- 
-Analyze the email below and classify it as exactly one of:
-- "event"        → an invitation to attend something (talk, seminar, workshop, fest, sports event, meeting, competition)
-- "reschedule"   → an existing event has been postponed or rescheduled to a new date
-- "cancellation" → an existing event has been cancelled
-- "announcement" → a general notice, policy update, holiday notice, result declaration, or information with no event to attend
- 
-────────────────────────────────────────
-For "event" extract:
-  - "event"       : full name/title of the event
-  - "dates"       : list of ALL event dates in YYYY-MM-DD format
-                    • If multi-day (e.g. "June 15-17"), include every date: ["2026-06-15","2026-06-16","2026-06-17"]
-                    • Ignore registration deadlines, submission deadlines, abstract deadlines
-                    • Only include actual dates the event takes place
-  - "old_dates"   : [] (empty list — this is a new event)
-  - "time"        : start time of the event e.g. "09:30 AM", or null if not mentioned
-  - "venue"       : full venue name, or null if not mentioned
- 
-For "reschedule" extract:
-  - "event"       : full name/title of the event (same as the original event name)
-  - "dates"       : the NEW date(s) in YYYY-MM-DD (the updated schedule)
-  - "old_dates"   : the PREVIOUS date(s) in YYYY-MM-DD that are being replaced
-  - "time"        : new time if mentioned, else null
-  - "venue"       : new venue if changed, else null
- 
-For "cancellation" extract:
-  - "event"       : full name/title of the cancelled event
-  - "dates"       : []
-  - "old_dates"   : the original date(s) of the event being cancelled in YYYY-MM-DD
-  - "time"        : null
-  - "venue"       : null
-  - "description" : one sentence explaining the cancellation
- 
-For "announcement" extract:
-  - "event"       : null
-  - "dates"       : []
-  - "old_dates"   : []
-  - "time"        : null
-  - "venue"       : null
-  - "description" : one sentence summarizing the announcement
-────────────────────────────────────────
- 
-Return ONLY a raw JSON object. No explanation. No markdown fences. No extra text.
- 
-{{
-  "type": "event",
-  "event": "...",
-  "dates": ["YYYY-MM-DD"],
-  "old_dates": [],
-  "time": "...",
-  "venue": "...",
-  "description": "..."
-}}
- 
-Subject: {subject}
- 
-Body:
-{body}
-"""
- 
     try:
-        response = llm_client.invoke(prompt)
- 
-        raw   = response.content
-        clean = re.sub(r"```json|```", "", raw).strip()
- 
-        result = json.loads(clean)
- 
-        # Sanitize — ensure lists are always lists
-        if not isinstance(result.get("dates"), list):
-            result["dates"] = []
-        if not isinstance(result.get("old_dates"), list):
-            result["old_dates"] = []
-            
-        # Sanitize - ensure string keys exist to prevent KeyErrors
-        for key in ["event", "time", "venue", "description"]:
-            if key not in result:
-                result[key] = None
- 
-        return result
- 
-    except json.JSONDecodeError:
-        print("  WARNING: SLM returned invalid JSON — using fallback.")
-        return {
-            "type":        "unknown",
-            "event":       subject,
-            "dates":       [],
-            "old_dates":   [],
-            "time":        None,
-            "venue":       None,
+        text = f"Subject: {subject}\n\n{body}"
+        entities = model.predict_entities(text, labels)
+
+        # Basic heuristic for classification
+        lower_text = text.lower()
+        if "cancel" in lower_text:
+            email_type = "cancellation"
+        elif "postpone" in lower_text or "reschedule" in lower_text:
+            email_type = "reschedule"
+        elif any(kw in lower_text for kw in ["event", "seminar", "workshop", "talk", "invite"]):
+            email_type = "event"
+        else:
+            email_type = "announcement"
+
+        result = {
+            "type": email_type,
+            "event": subject,  # default to subject
+            "dates": [],
+            "old_dates": [],
+            "time": None,
+            "venue": None,
             "description": None
         }
+
+        if email_type == "announcement":
+            result["description"] = subject
+            return result
+
+        extracted_dates = []
+
+        for ent in entities:
+            label = ent["label"]
+            val = ent["text"]
+
+            if label == "event" and result["event"] == subject:
+                result["event"] = val
+            elif label == "date":
+                try:
+                    dt = dateutil.parser.parse(val, fuzzy=True)
+                    extracted_dates.append(dt.strftime("%Y-%m-%d"))
+                except Exception:
+                    # Ignore dates that can't be parsed
+                    pass
+            elif label == "time" and not result["time"]:
+                result["time"] = val
+            elif label == "venue" and not result["venue"]:
+                result["venue"] = val
+
+        # Remove duplicates while maintaining order
+        seen = set()
+        unique_dates = [x for x in extracted_dates if not (x in seen or seen.add(x))]
+
+        if email_type == "cancellation":
+            result["old_dates"] = unique_dates
+            result["description"] = f"Event cancelled: {result['event']}"
+        elif email_type == "reschedule":
+            # For reschedule, assume first date is old and rest are new
+            if len(unique_dates) >= 2:
+                result["old_dates"] = [unique_dates[0]]
+                result["dates"] = unique_dates[1:]
+            else:
+                result["dates"] = unique_dates
+        else:
+            result["dates"] = unique_dates
+
+        return result
+
     except Exception as e:
-        print(f"  ERROR calling Ollama: {e}")
+        print(f"  ERROR analyzing email with GLiNER: {e}")
         return {
             "type":        "unknown",
             "event":       subject,
@@ -411,7 +400,7 @@ for email_id in email_ids:
     # ANALYZE EMAIL WITH LOCAL SLM
     # --------------------------------------------------
 
-    print("Analyzing email with Phi-3...")
+    print("Analyzing email")
     result = analyze_email(body, subject)
 
     print(f"TYPE     : {result['type'].upper()}")

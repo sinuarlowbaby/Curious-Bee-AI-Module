@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
 import logging
 import os
+import sqlite3
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
@@ -37,20 +38,21 @@ async def lifespan(app:FastAPI):
         if QDRANT_COLLECTION_NAME not in existing_collections:
             app.state.client.create_collection(
                 collection_name=QDRANT_COLLECTION_NAME,
-                vectors_config=VectorParams(size=384, distance=Distance.COSINE),
+                vectors_config=VectorParams(size=768, distance=Distance.COSINE),
             )
             logger.info(f"Created Qdrant collection '{QDRANT_COLLECTION_NAME}'")
     #     app.state.reranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
 
-        # app.state.embedding_model = HuggingFaceEmbeddings(
-        #     model_name="nomic-ai/nomic-embed-text-v1.5",  # better model but need 547MB
-        #     model_kwargs={"trust_remote_code": True}
-        # )
         app.state.embedding_model = HuggingFaceEmbeddings(
-            model_name="all-MiniLM-L6-v2",    # basic modle with 50 MB
-            model_kwargs={"device": "cpu"},  # Or "cuda" if you are using a GPU
-            encode_kwargs={"normalize_embeddings": True}  # Standard best practice for Qdrant cosine distance
+            model_name="nomic-ai/nomic-embed-text-v1.5",  # 768-dim, 547MB
+            model_kwargs={"trust_remote_code": True},
+            encode_kwargs={"normalize_embeddings": True}   # required for cosine similarity
         )
+        # app.state.embedding_model = HuggingFaceEmbeddings(
+        #     model_name="all-MiniLM-L6-v2",    # 384-dim, 50 MB
+        #     model_kwargs={"device": "cpu"},
+        #     encode_kwargs={"normalize_embeddings": True}
+        # )
 
 
 
@@ -71,6 +73,27 @@ async def lifespan(app:FastAPI):
     #         decode_responses=True,
     #     )
         app.state.sessions = {}
+
+        # ── SQLite Setup ──────────────────────────────────────────
+        # Store db path on app.state so routes can open connections
+        _base = os.path.dirname(os.path.abspath(__file__))
+        app.state.db_path = os.path.join(_base, "curious_bees.db")
+
+        # Create the posts table if it doesn't exist yet
+        with sqlite3.connect(app.state.db_path) as con:
+            con.execute("""
+                CREATE TABLE IF NOT EXISTS posts (
+                    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title     TEXT    NOT NULL,
+                    author    TEXT    NOT NULL DEFAULT 'Anonymous',
+                    tag       TEXT    NOT NULL DEFAULT 'Research',
+                    abstract  TEXT,
+                    date      TEXT,
+                    ts        INTEGER NOT NULL  -- epoch milliseconds (from client)
+                )
+            """)
+            con.commit()
+        logger.info(f"SQLite ready → {app.state.db_path}")
 
         logger.info("Server is ready!")
     except Exception as e:
