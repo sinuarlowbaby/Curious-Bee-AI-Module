@@ -22,13 +22,6 @@
     },
     {
         "title": "*Seminar on Artificial Intelligence and Future Technologies*",
-        "date": "2026-06-14",
-        "time": "09:30 AM",
-        "venue": "Seminar Hall, CSE Block A, SRMIST, Kattankulathur",
-        "description": null
-    },
-    {
-        "title": "*Seminar on Artificial Intelligence and Future Technologies*",
         "date": "2026-06-20",
         "time": "09:30 AM",
         "venue": "Seminar Hall, CSE Block A, SRMIST, Kattankulathur",
@@ -184,5 +177,118 @@
         "date": "2026-08-04",
         "time": "08:00 AM",
         "venue": "University Sports Complex"
+    },
+    {
+        "title": "National Level Technical Symposium - Technovanza 2026",
+        "date": "2026-07-10",
+        "time": "09:00 AM",
+        "venue": "Main Auditorium, SRMIST, Kattankulathur"
+    },
+    {
+        "title": "National Level Technical Symposium - Technovanza 2026",
+        "date": "2026-07-12",
+        "time": "09:00 AM",
+        "venue": "Main Auditorium, SRMIST, Kattankulathur"
+    },
+    {
+        "title": "National Level Technical Symposium - Technovanza 2026",
+        "date": "2026-07-11",
+        "time": "09:00 AM",
+        "venue": "Main Auditorium, SRMIST, Kattankulathur"
+    },
+    {
+        "title": "Seminar on Artificial Intelligence and Future Technologies",
+        "date": "2026-06-20",
+        "time": "10:00 AM",
+        "venue": "Seminar Hall, CSE Block A, SRMIST, Kattankulathur"
+    },
+    {
+        "title": "Workshop on Data Science and Machine Learning - Register Now",
+        "date": "2026-06-28",
+        "time": "09:00 AM onwards",
+        "venue": "Data Science Lab, CSE Block C, SRMIST, Kattankulathur Topics Covered:- Python for Data Science (NumPy, Pandas, Matplotlib)- Exploratory Data Analysis and Feature Engineering- Supervised and Unsupervised Learning with Scikit-Learn- Model Evaluation and Deployment using Flask Registration is mandatory",
+        "links": []
+    },
+    {
+        "title": "Workshop on Data Science and Machine Learning - Register Now",
+        "date": "2026-06-29",
+        "time": "09:00 AM onwards",
+        "venue": "Data Science Lab, CSE Block C, SRMIST, Kattankulathur Topics Covered:- Python for Data Science (NumPy, Pandas, Matplotlib)- Exploratory Data Analysis and Feature Engineering- Supervised and Unsupervised Learning with Scikit-Learn- Model Evaluation and Deployment using Flask Registration is mandatory",
+        "links": []
+    },
+    {
+        "title": "Workshop on Data Science and Machine Learning - Register Now",
+        "date": "2026-06-28",
+        "time": "09:00 AM onwards",
+        "venue": "Data Science Lab, CSE Block C, SRMIST, Kattankulathur Topics Covered:- Python for Data Science (NumPy, Pandas, Matplotlib)- Exploratory Data Analysis and Feature Engineering- Supervised and Unsupervised Learning with Scikit-Learn- Model Evaluation and Deployment using Flask Registration is mandatory",
+        "links": [
+            "https://forms.gle/xKd92mNpQv7BtJeR8"
+        ]
+    },
+    {
+        "title": "Workshop on Data Science and Machine Learning - Register Now",
+        "date": "2026-06-29",
+        "time": "09:00 AM onwards",
+        "venue": "Data Science Lab, CSE Block C, SRMIST, Kattankulathur Topics Covered:- Python for Data Science (NumPy, Pandas, Matplotlib)- Exploratory Data Analysis and Feature Engineering- Supervised and Unsupervised Learning with Scikit-Learn- Model Evaluation and Deployment using Flask Registration is mandatory",
+        "links": [
+            "https://forms.gle/xKd92mNpQv7BtJeR8"
+        ]
+    },
+    {
+        "title": "Webinar on Generative AI and Large Language Models - Free Registration",
+        "date": "2026-07-03",
+        "time": "03:00 PM",
+        "venue": "Zoom",
+        "link": "https://srmist.zoom.us/webinar/register/genai2026"
+    },
+    {
+        "title": "CodeStorm 2026 - National Level Hackathon | Register Your Team",
+        "date": "2026-07-19",
+        "time": "10:00 AM",
+        "venue": "Innovation Hub, Ground Floor, IT Block, SRMIST, Kattankulathur Eligibility: Open to all undergraduate and postgraduate students across India",
+        "link": "https://unstop.com/hackathons/codestorm-2026-srmist"
+    },
+    {
+        "title": "CodeStorm 2026 - National Level Hackathon | Register Your Team",
+        "date": "2026-07-20",
+        "time": "10:00 AM",
+        "venue": "Innovation Hub, Ground Floor, IT Block, SRMIST, Kattankulathur Eligibility: Open to all undergraduate and postgraduate students across India",
+        "link": "https://unstop.com/hackathons/codestorm-2026-srmist"
+    },
+    {
+        "title": "CodeStorm 2026 - National Level Hackathon | Register Your Team",
+        "date": "2026-07-19",
+        "time": "10:00 AM",
+        "venue": "Innovation Hub, Ground Floor, IT Block, SRMIST, Kattankulathur Eligibility: Open to all undergraduate and postgraduate students across India",
+        "link": "https://unstop.com/hackathons/codestorm-2026-srmist"
+    },
+    {
+        "title": "CodeStorm 2026 - National Level Hackathon | Register Your Team",
+        "date": "2026-07-20",
+        "time": "10:00 AM",
+        "venue": "Innovation Hub, Ground Floor, IT Block, SRMIST, Kattankulathur Eligibility: Open to all undergraduate and postgraduate students across India",
+        "link": "https://unstop.com/hackathons/codestorm-2026-srmist"
+    },
+    {
+        "title": "Guest Lecture on VLSI Design and Embedded Systems",
+        "date": "2026-07-08",
+        "time": "Wednesday",
+        "venue": "ECE Seminar Hall, Electronics Block, SRMIST, Kattankulathur The lecture will cover fundamentals of VLSI design flow, FPGA programming, and current industry trends in embedded system development",
+        "link": null
+    },
+    {
+        "title": "Seminar on Artificial Intelligence and Future Technologies",
+        "date": "2026-06-20",
+        "from_time": "10:00 AM",
+        "to_time": null,
+        "venue": "Seminar Hall, CSE Block A,"
+    },
+    {
+        "title": "*Seminar on Artificial Intelligence and Future Technologies*",
+        "date": "2026-06-20",
+        "from_time": "10:00 AM",
+        "to_time": null,
+        "venue": "Seminar Hall, CSE Block A,",
+        "link": null
     }
 ]

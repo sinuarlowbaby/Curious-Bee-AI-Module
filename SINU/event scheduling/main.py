@@ -128,7 +128,7 @@ def add_event(entry):
     print(f"  [ADDED]   '{entry['title']}' on {entry['date']}")
 
 
-def update_event(old_entry, new_dates, new_time, new_venue):
+def update_event(old_entry, new_dates, new_from_time, new_to_time, new_venue, new_link=None):
     """
     Remove all old calendar entries for this event title + old date,
     then insert new entries with updated dates.
@@ -149,8 +149,10 @@ def update_event(old_entry, new_dates, new_time, new_venue):
         new_entry = {
             "title":       old_entry["title"],
             "date":        date,
-            "time":        new_time        or old_entry.get("time"),
-            "venue":       new_venue       or old_entry.get("venue")
+            "from_time":   new_from_time   or old_entry.get("from_time"),
+            "to_time":     new_to_time     or old_entry.get("to_time"),
+            "venue":       new_venue       or old_entry.get("venue"),
+            "link":        new_link        or old_entry.get("link")
         }
         calendar.append(new_entry)
         print(f"  [UPDATED] '{old_entry['title']}' — {old_entry['date']} → {date}")
@@ -246,6 +248,34 @@ def extract_main_body(body_text):
     return text.strip(" ,;")
 
 
+def is_likely_date(text):
+    """
+    Checks if a string contains obvious date indicators (like month names or slashes/dashes)
+    to prevent dateutil from hallucinating dates out of random numbers (e.g. 'GPT-2' -> June 2).
+    """
+    text_lower = text.lower()
+    months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+    if any(m in text_lower for m in months):
+        return True
+    if re.search(r'\d{1,2}[/-]\d{1,2}', text):
+        return True
+    return False
+    return False
+
+
+def is_likely_time(text):
+    """
+    Checks if a string contains numbers or obvious time indicators to 
+    prevent false positives like 'Wednesday' being extracted as time.
+    """
+    text_lower = text.lower()
+    if any(char.isdigit() for char in text_lower):
+        return True
+    if any(kw in text_lower for kw in ["am", "pm", "noon", "midnight", "hours", "hrs"]):
+        return True
+    return False
+
+
 def analyze_email(body, subject):
     """
     Send email body + subject to GLiNER model.
@@ -273,17 +303,20 @@ def analyze_email(body, subject):
             "dates": [],
             "old_dates": [],
             "time": None,
+            "from_time": None,
+            "to_time": None,
             "venue": None,
+            "link": None,
             "description": None
         }
 
-        if email_type == "announcement":
-            # For general announcements, taking just the first sentence is usually 
-            # the most concise and accurate description of the notice.
+        if email_type in ("announcement", "cancellation", "reschedule"):
+            # Taking just the first sentence is usually the most concise and accurate description of the notice.
             full_body = extract_main_body(body)
             sentences = re.split(r'(?<=[.!?])\s+', full_body)
             result["description"] = sentences[0].strip() if sentences else full_body
-            return result
+            if email_type == "announcement":
+                return result
 
         extracted_dates = []
 
@@ -302,6 +335,8 @@ def analyze_email(body, subject):
             if label == "event" and result["event"] == subject:
                 result["event"] = val
             elif label == "date":
+                if not is_likely_date(val):
+                    continue
                 try:
                     dt = dateutil.parser.parse(val, fuzzy=True)
                     date_str = dt.strftime("%Y-%m-%d")
@@ -329,9 +364,30 @@ def analyze_email(body, subject):
                     # Ignore dates that can't be parsed
                     pass
             elif label == "time" and not result["time"]:
+                if not is_likely_time(val):
+                    continue
                 result["time"] = val
+                # Attempt to split time into from_time and to_time
+                val_clean = re.sub(r'(?i)\s+onwards', '', val).strip()
+                dash_pattern = r'[\u2013\u2014\u2015\u2212\ufe58\ufe63\uff0d\-]'
+                split_pattern = r'\s*(?:' + dash_pattern + r'|to|till|until)\s*'
+                time_parts = re.split(split_pattern, val_clean, maxsplit=1, flags=re.IGNORECASE)
+                if len(time_parts) == 2:
+                    result["from_time"] = time_parts[0].strip()
+                    result["to_time"] = time_parts[1].strip()
+                else:
+                    result["from_time"] = val_clean
+                    result["to_time"] = None
             elif label == "venue" and not result["venue"]:
-                result["venue"] = val
+                # GLiNER often only extracts the first part (e.g. "Seminar Hall").
+                # This regex captures the venue name plus any comma-separated 
+                # address parts that immediately follow it, stopping at a period or newline.
+                venue_pattern = re.escape(val) + r"(?:,\s*[^.\n]+)*"
+                match = re.search(venue_pattern, text)
+                if match:
+                    result["venue"] = match.group(0).strip()
+                else:
+                    result["venue"] = val
 
         # --------------------------------------------------
         # EXPAND DATE RANGES (e.g. "July 10 to July 12" → all 3 days)
@@ -347,6 +403,8 @@ def analyze_email(body, subject):
         for pattern in range_patterns:
             for match in re.finditer(pattern, text, re.IGNORECASE):
                 start_str, end_str = match.group(1).strip(), match.group(2).strip()
+                if not is_likely_date(start_str) or not is_likely_date(end_str):
+                    continue
                 try:
                     start_dt = dateutil.parser.parse(start_str, fuzzy=True)
                     end_dt   = dateutil.parser.parse(end_str,   fuzzy=True)
@@ -382,6 +440,27 @@ def analyze_email(body, subject):
                 result["dates"] = unique_dates
         else:
             result["dates"] = unique_dates
+            # Extract URLs if any exist in the event email
+            url_pattern = r'https?://[^\s<>\"\'\]\)]+|www\.[^\s<>\"\'\]\)]+'
+            all_links = list(dict.fromkeys(re.findall(url_pattern, text)))
+            
+            # Filter to ONLY include registration/form links
+            reg_links = []
+            for link in all_links:
+                lower_link = link.lower()
+                # 1. Check if URL domain/path suggests a form or event platform
+                if any(kw in lower_link for kw in ["form", "unstop", "hackathon", "register", "apply", "ticket", "eventbrite"]):
+                    reg_links.append(link)
+                    continue
+                
+                # 2. Check context (words immediately before the link in the email)
+                link_idx = text.find(link)
+                if link_idx != -1:
+                    context = text[max(0, link_idx-40):link_idx].lower()
+                    if any(kw in context for kw in ["register", "registration", "apply", "join", "here", "link"]):
+                        reg_links.append(link)
+            
+            result["link"] = reg_links[0] if reg_links else None
 
         return result
 
@@ -430,18 +509,16 @@ def analyze_email(body, subject):
 MAIL_SENDER   = "dean@gmail.com"          # who sent the email
 MAIL_RECEIVER = "receiver@gmail.com"      # who received it
 MAIL_SUBJECT  = """
-Internal Assessment Marks Submission Deadline
+Holiday Notice – Institution Closed on June 17, 2026
 """
 MAIL_BODY     = """
-Dear Faculty,
-This is to inform all faculty members that the Internal Assessment marks for the odd semester 2026 must be
-submitted to the examination cell on or before July 10, 2026.
-Faculty who fail to submit marks before the deadline will have their marks locked by the system automatically.
-Kindly ensure timely submission to avoid any inconvenience.
+Dear All,
+This is to inform all faculty, staff, and students that the institution will remain closed on June 17, 2026 on account of
+a public holiday.
+All scheduled activities, classes, and lab sessions for that day stand cancelled. Please plan accordingly.
+For any urgent matters, kindly contact your respective department offices.
 Thanks and Regards,
-Dr. A. Ramesh
-Head of Department
-Department of Computer Science and Engineering
+Administrative Office
 SRMIST, Kattankulathur
 """
 
@@ -472,8 +549,8 @@ for subject, sender, receiver, body in [
         print("=" * 50)
         continue
 
-    # Clean up whitespace
-    body = re.sub(r"\s+", " ", body).strip()
+    # Clean up whitespace but preserve newlines so our line-based regexes (like venue extraction) still work
+    body = re.sub(r"[ \t\r]+", " ", body).strip()
 
     # --------------------------------------------------
     # PRINT EMAIL HEADER
@@ -511,8 +588,10 @@ for subject, sender, receiver, body in [
                 entry = {
                     "title":       result["event"],
                     "date":        date,
-                    "time":        result["time"],
-                    "venue":       result["venue"]
+                    "from_time":   result["from_time"],
+                    "to_time":     result["to_time"],
+                    "venue":       result["venue"],
+                    "link":        result.get("link")
                 }
                 add_event(entry)
 
@@ -537,8 +616,10 @@ for subject, sender, receiver, body in [
             update_event(
                 old_entry       = match,
                 new_dates       = result["dates"],
-                new_time        = result["time"],
-                new_venue       = result["venue"]
+                new_from_time   = result["from_time"],
+                new_to_time     = result["to_time"],
+                new_venue       = result["venue"],
+                new_link        = result.get("link")
             )
         else:
             # No confident match found — add as new entry but flag it
@@ -547,10 +628,20 @@ for subject, sender, receiver, body in [
                 entry = {
                     "title":       f"[POSSIBLY RESCHEDULED] {result['event']}",
                     "date":        date,
-                    "time":        result["time"],
-                    "venue":       result["venue"]
+                    "from_time":   result["from_time"],
+                    "to_time":     result["to_time"],
+                    "venue":       result["venue"],
+                    "link":        result.get("link")
                 }
                 add_event(entry)
+
+        print()
+        print("ANNOUNCEMENT ACTIONS:")
+        save_announcement(
+            sender_email = sender_email,
+            subject      = subject,
+            description  = result.get("description") or f"Event '{result['event']}' has been rescheduled."
+        )
 
     # ==================================================
     # HANDLE: CANCELLED EVENT → Delete from calendar.json
