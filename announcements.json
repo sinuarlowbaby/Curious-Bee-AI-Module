@@ -76,5 +76,47 @@
         "subject": "Internal Assessment Marks Submission Deadline",
         "description": "This is to inform all faculty members that the Internal Assessment marks for the odd semester 2026 must be submitted to the examination cell on or before July 10, 2026.",
         "received_on": "2026-06-03"
+    },
+    {
+        "sender": "dean@gmail.com",
+        "subject": "Holiday Notice – Institution Closed on June 17, 2026",
+        "description": "This is to inform all faculty, staff, and students that the institution will remain closed on June 17, 2026 on account of a public holiday. All scheduled activities, classes, and lab sessions for that day stand cancelled. Please plan accordingly. For any urgent matters, kindly contact your respective department offices.",
+        "received_on": "2026-06-03"
+    },
+    {
+        "sender": "dean@gmail.com",
+        "subject": "Cancellation – Workshop on Cyber Security and Ethical Hacking",
+        "description": "We regret to inform you that the Workshop on Cyber Security and Ethical Hacking scheduled on June 18, 2026 has been cancelled due to unavoidable circumstances. We apologize for the inconvenience caused. A new date will be announced shortly.",
+        "received_on": "2026-06-03"
+    },
+    {
+        "sender": "dean@gmail.com",
+        "subject": "Alumni Interaction Session – Career Paths in the Tech Industry",
+        "description": "The Alumni Relations Cell, SRMIST, is organising an Alumni Interaction Session featuring\ndistinguished alumni working across leading technology companies.",
+        "received_on": "2026-06-03"
+    },
+    {
+        "sender": "dean@gmail.com",
+        "subject": "Alumni Interaction Session – Career Paths in the Tech Industry",
+        "description": "The Alumni Relations Cell, SRMIST, is organising an Alumni Interaction Session featuring\ndistinguished alumni working across leading technology companies.",
+        "received_on": "2026-06-03"
+    },
+    {
+        "sender": "dean@gmail.com",
+        "subject": "Alumni Interaction Session – Career Paths in the Tech Industry",
+        "description": "The Alumni Relations Cell, SRMIST, is organising an Alumni Interaction Session featuring\ndistinguished alumni working across leading technology companies.",
+        "received_on": "2026-06-03"
+    },
+    {
+        "sender": "dean@gmail.com",
+        "subject": "Rescheduled – Seminar on Artificial Intelligence and Future Technologies",
+        "description": "This is to inform you that the Seminar on Artificial Intelligence and Future Technologies which was originally\nscheduled on 14 June 2026 has been rescheduled due to unavoidable circumstances.",
+        "received_on": "2026-06-03"
+    },
+    {
+        "sender": "dean@gmail.com",
+        "subject": "Holiday Notice – Institution Closed on June 17, 2026",
+        "description": "This is to inform all faculty, staff, and students that the institution will remain closed on June 17, 2026 on account of\na public holiday.\nAll scheduled activities, classes, and lab sessions for that day stand cancelled. Please plan accordingly.\nFor any urgent matters, kindly contact your respective department offices.",
+        "received_on": "2026-06-03"
     }
 ]
