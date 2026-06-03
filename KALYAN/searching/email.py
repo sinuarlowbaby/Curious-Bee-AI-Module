@@ -11,8 +11,6 @@ imap = imaplib.IMAP4_SSL("imap.gmail.com")
 imap.login(
     "srmdean02@gmail.com",
     "xewwthmnlnctavwe"
-)
-
 # ==========================
 # OPEN INBOX
 # ==========================
