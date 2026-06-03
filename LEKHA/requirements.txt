@@ -1,0 +1,16 @@
+# pip install sentence-transformers spacy dateparser beautifulsoup4 lxml python-dotenv
+# sentence-transformers
+# beautifulsoup4
+# lxml
+# python-dotenv
+# torch
+# ollama
+# pip install  python-dotenv beautifulsoup4 lxml sentence-transformers
+
+gliner
+sentence-transformers
+dateparser
+beautifulsoup4
+lxml
+python-dotenv
+torch 
