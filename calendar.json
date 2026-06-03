@@ -130,5 +130,29 @@
         "date": "2026-06-01",
         "time": "2:59 PM",
         "venue": "SRMIST"
+    },
+    {
+        "title": "Technovanza 2026",
+        "date": "2026-07-10",
+        "start_time": "09:00 AM",
+        "end_time": null,
+        "venue": "Main Auditorium",
+        "department": "SRMIST",
+        "organizer": "Dr. P. Venkatesh",
+        "category": "Symposiums",
+        "description": "Dear All, Greetings!!! We are pleased to invite you to *Technovanza 2026*, the National Level Technical Symposium organized by SRMIST.",
+        "registration_link": null
+    },
+    {
+        "title": "Technovanza 2026",
+        "date": "2026-07-12",
+        "start_time": "09:00 AM",
+        "end_time": null,
+        "venue": "Main Auditorium",
+        "department": "SRMIST",
+        "organizer": "Dr. P. Venkatesh",
+        "category": "Symposiums",
+        "description": "Dear All, Greetings!!! We are pleased to invite you to *Technovanza 2026*, the National Level Technical Symposium organized by SRMIST.",
+        "registration_link": null
     }
 ]
