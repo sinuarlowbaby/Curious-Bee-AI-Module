@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>ResearchHub</title>
+    <title>CuriousBees Semantic Search</title>
 
     <style>
         body {
@@ -24,7 +25,7 @@
         }
 
         .navbar input {
-            width: 430px;
+            width: 450px;
             padding: 12px;
             border: none;
             border-radius: 25px;
@@ -43,12 +44,11 @@
 
         .container {
             display: grid;
-            grid-template-columns: 220px 1fr 250px;
+            grid-template-columns: 1fr 260px;
             gap: 20px;
             padding: 25px;
         }
 
-        .sidebar,
         .feed,
         .rightbar {
             background: white;
@@ -56,19 +56,13 @@
             border-radius: 12px;
         }
 
-        .sidebar p,
-        .rightbar p {
-            background: #e0f2fe;
-            padding: 10px;
-            border-radius: 8px;
-        }
-
         .card {
             background: white;
             padding: 20px;
             margin-bottom: 20px;
             border-radius: 14px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-left: 6px solid #38bdf8;
         }
 
         .card h3 {
@@ -81,9 +75,44 @@
             font-weight: bold;
         }
 
+        .description {
+            color: #334155;
+            line-height: 1.5;
+        }
+
         .tags {
             color: #0284c7;
             font-weight: bold;
+        }
+
+        .type-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            color: white;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .supervisor {
+            background: #2563eb;
+        }
+
+        .opportunity {
+            background: #16a34a;
+        }
+
+        .thread {
+            background: #9333ea;
+        }
+
+        .workspace {
+            background: #ea580c;
+        }
+
+        .paper {
+            background: #0f766e;
         }
 
         .search-type {
@@ -91,56 +120,90 @@
             font-weight: bold;
             color: #334155;
         }
+
+        .rightbar p {
+            background: #e0f2fe;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .filter-btn {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: #e2e8f0;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .filter-btn:hover {
+            background: #cbd5e1;
+        }
+
+        a {
+            color: #0284c7;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .empty {
+            color: #64748b;
+            padding: 20px;
+            text-align: center;
+        }
     </style>
 </head>
 
 <body>
 
     <div class="navbar">
-        <h2>ResearchHub</h2>
+        <h2>CuriousBees</h2>
 
-        <input
-            type="text"
-            id="searchInput"
-            placeholder="🔍 Search papers, topics, researchers..."
-        >
+        <input type="text" id="searchInput" placeholder="Search supervisors, opportunities, threads...">
 
-        <button onclick="searchPapers()">Search</button>
+        <button onclick="searchItems()">Search</button>
     </div>
 
     <div class="container">
 
-        <div class="sidebar">
-            <h3>Trending Tags</h3>
-            <p>#AI</p>
-            <p>#ML</p>
-            <p>#Agriculture</p>
-            <p>#IoT</p>
-            <p>#ComputerVision</p>
-        </div>
-
         <div class="feed">
-            <h2>Research Feed</h2>
+            <h2>Research Scholar Search</h2>
+
             <div id="searchType"></div>
+
             <div id="results"></div>
         </div>
 
         <div class="rightbar">
-            <h3>Suggested Experts</h3>
-            <p>👤 Dr. Kumar</p>
-            <p>👤 Dr. Priya</p>
-            <p>👤 Dr. Raj</p>
+            <h3>Filters</h3>
 
-            <h3>Trending Research</h3>
-            <p>#Agriculture</p>
-            <p>#DeepLearning</p>
-            <p>#ComputerVision</p>
+            <button class="filter-btn" onclick="quickSearch('AI supervisor')">
+                Supervisors
+            </button>
+
+            <button class="filter-btn" onclick="quickSearch('research opportunity')">
+                Opportunities
+            </button>
+
+            <button class="filter-btn" onclick="quickSearch('discussion thread')">
+                Threads
+            </button>
+
+            <h3>Trending Topics</h3>
+            <p onclick="quickSearch('AI agriculture')">#AI Agriculture</p>
+            <p onclick="quickSearch('medical image analysis')">#Medical Imaging</p>
+            <p onclick="quickSearch('blockchain security')">#Blockchain</p>
+            <p onclick="quickSearch('cybersecurity research')">#CyberSecurity</p>
         </div>
 
     </div>
 
     <script>
-        async function searchPapers() {
+        async function searchItems() {
             const query = document.getElementById("searchInput").value;
 
             if (query.trim() === "") {
@@ -166,21 +229,92 @@
             displayResults(data.results);
         }
 
+        function quickSearch(query) {
+            document.getElementById("searchInput").value = query;
+            searchItems();
+        }
+
+        function getTypeClass(type) {
+            if (!type) {
+                return "paper";
+            }
+
+            const lowerType = type.toLowerCase();
+
+            if (lowerType === "supervisor") {
+                return "supervisor";
+            }
+
+            if (lowerType === "opportunity") {
+                return "opportunity";
+            }
+
+            if (lowerType === "thread") {
+                return "thread";
+            }
+
+            if (lowerType === "workspace") {
+                return "workspace";
+            }
+
+            return "paper";
+        }
+
         function displayResults(results) {
             const resultsDiv = document.getElementById("results");
 
             resultsDiv.innerHTML = "";
 
-            results.forEach(post => {
+            if (!results || results.length === 0) {
+                resultsDiv.innerHTML = `
+                    <div class="empty">
+                        No results found.
+                    </div>
+                `;
+                return;
+            }
+
+            results.forEach(item => {
+                const typeClass = getTypeClass(item.type);
+                const typeName = item.type ? item.type : "paper";
+
+                let fileLink = "";
+
+                if (item.file_path && item.file_path !== "") {
+                    fileLink = `
+                        <p>
+                            <a href="/${item.file_path}" target="_blank">
+                                Open Related File
+                            </a>
+                        </p>
+                    `;
+                }
+
                 resultsDiv.innerHTML += `
                     <div class="card">
-                        <h3>📄 ${post.title}</h3>
-                        <p class="author">👤 ${post.author}</p>
-                        <p>${post.description}</p>
-                        <p class="tags">
-                            ${post.tags.map(tag => "#" + tag).join(" ")}
+                        <span class="type-badge ${typeClass}">
+                            ${typeName.toUpperCase()}
+                        </span>
+
+                        <h3>${item.title}</h3>
+
+                        <p class="author">By: ${item.author}</p>
+
+                        <p class="description">
+                            ${item.description}
                         </p>
-                        <p>❤️ ${post.likes} &nbsp; 💬 ${post.comments} &nbsp; 🔖 Save</p>
+
+                        <p class="tags">
+                            ${item.tags.map(tag => "#" + tag).join(" ")}
+                        </p>
+
+                        <p>
+                            Likes: ${item.likes} &nbsp;
+                            Comments: ${item.comments} &nbsp;
+                            Save
+                        </p>
+
+                        ${fileLink}
                     </div>
                 `;
             });
@@ -188,4 +322,5 @@
     </script>
 
 </body>
+
 </html>
