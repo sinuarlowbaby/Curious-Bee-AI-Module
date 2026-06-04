@@ -22,13 +22,6 @@
     },
     {
         "title": "*Seminar on Artificial Intelligence and Future Technologies*",
-        "date": "2026-06-14",
-        "time": "09:30 AM",
-        "venue": "Seminar Hall, CSE Block A, SRMIST, Kattankulathur",
-        "description": null
-    },
-    {
-        "title": "*Seminar on Artificial Intelligence and Future Technologies*",
         "date": "2026-06-20",
         "time": "09:30 AM",
         "venue": "Seminar Hall, CSE Block A, SRMIST, Kattankulathur",
@@ -96,18 +89,6 @@
         "venue": "SRM Institute of Science and Technology, Kattankulathur - 603203"
     },
     {
-        "title": "Workshop on Cyber Security and Ethical Hacking",
-        "date": "2026-06-05",
-        "time": "09:30 AM",
-        "venue": "IT Seminar Hall"
-    },
-    {
-        "title": "Workshop on Cyber Security and Ethical Hacking",
-        "date": "2026-06-18",
-        "time": "09:30 AM",
-        "venue": "IT Seminar Hall"
-    },
-    {
         "title": "Seminar on Artificial Intelligence and Future Technologies",
         "date": "2026-06-20",
         "time": "10:00 AM",
@@ -130,29 +111,5 @@
         "date": "2026-06-01",
         "time": "2:59 PM",
         "venue": "SRMIST"
-    },
-    {
-        "title": "Technovanza 2026",
-        "date": "2026-07-10",
-        "start_time": "09:00 AM",
-        "end_time": null,
-        "venue": "Main Auditorium",
-        "department": "SRMIST",
-        "organizer": "Dr. P. Venkatesh",
-        "category": "Symposiums",
-        "description": "Dear All, Greetings!!! We are pleased to invite you to *Technovanza 2026*, the National Level Technical Symposium organized by SRMIST.",
-        "registration_link": null
-    },
-    {
-        "title": "Technovanza 2026",
-        "date": "2026-07-12",
-        "start_time": "09:00 AM",
-        "end_time": null,
-        "venue": "Main Auditorium",
-        "department": "SRMIST",
-        "organizer": "Dr. P. Venkatesh",
-        "category": "Symposiums",
-        "description": "Dear All, Greetings!!! We are pleased to invite you to *Technovanza 2026*, the National Level Technical Symposium organized by SRMIST.",
-        "registration_link": null
     }
-]
+  ]
