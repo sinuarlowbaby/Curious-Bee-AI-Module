@@ -1,25 +1,72 @@
+# Environment and secrets
 .env
-env
+.env.*
+!.env.example
 **/.env
-**/env
+**/.env.*
+!**/.env.example
+
+# Python bytecode and caches
 __pycache__/
-*.pyc
-
-# Logs
-*.log
-app.log
-
-# Databases
-*.db
-*.sqlite
-*.sqlite3
-*.db-journal
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
 # Virtual environments
 venv/
 .venv/
 env/
+ENV/
+**/venv/
+**/.venv/
+**/env/
+**/ENV/
+**/venv311/
 
-# IDEs
+# Logs
+*.log
+app.log
+
+# Local runtime data and generated outputs
+
+
+
+# Databases and vector stores
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+chroma_db/
+researchhub_chroma_db/
+**/chroma_db/
+**/researchhub_chroma_db/
+qdrant_storage/
+**/qdrant_storage/
+
+# Model, ML, and notebook artifacts
+models/
+checkpoints/
+*.pt
+*.pth
+*.onnx
+*.pkl
+*.joblib
+.ipynb_checkpoints/
+
+# Build and packaging outputs
+build/
+dist/
+*.egg-info/
+
+# IDE and OS files
 .vscode/
 .idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
