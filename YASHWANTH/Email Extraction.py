@@ -1,10 +1,12 @@
 import os, re, json, imaplib, email
 from email import policy
 from email.header import decode_header
+# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
+# pyrefly: ignore [missing-import]
 from bs4 import BeautifulSoup
 
-load_dotenv()
+load_dotenv();
 
 EMAIL = os.getenv("EMAIL")
 APP_PASSWORD = os.getenv("APP_PASSWORD")
