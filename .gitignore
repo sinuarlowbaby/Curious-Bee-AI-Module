@@ -5,6 +5,10 @@
 **/.env
 **/.env.*
 !**/.env.example
+credential.json
+credentials.json
+**/credential.json
+**/credentials.json
 
 # Python bytecode and caches
 __pycache__/
