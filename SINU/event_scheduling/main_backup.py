@@ -12,6 +12,7 @@ import json
 import os
 import datetime
 import dateutil.parser
+from email.header import decode_header
 
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
@@ -152,7 +153,8 @@ def update_event(old_entry, new_dates, new_from_time, new_to_time, new_venue, ne
             "from_time":   new_from_time   or old_entry.get("from_time"),
             "to_time":     new_to_time     or old_entry.get("to_time"),
             "venue":       new_venue       or old_entry.get("venue"),
-            "link":        new_link        or old_entry.get("link")
+            "link":        new_link        or old_entry.get("link"),
+            "status":      "reschedule"
         }
         calendar.append(new_entry)
         print(f"  [UPDATED] '{old_entry['title']}' — {old_entry['date']} → {date}")
@@ -283,6 +285,16 @@ def analyze_email(body, subject):
     dates, old_dates, time, venue, description.
     """
     try:
+        # Clean subject line
+        subject = re.sub(r"^(Re:|Fwd:|FW:)\s*", "", subject, flags=re.IGNORECASE).strip()
+
+        # Clean HTML tags and excess whitespace from body
+        body = re.sub(r"<[^>]+>", " ", body)
+        body = re.sub(r"&nbsp;", " ", body)
+        body = re.sub(r"[ \t]+", " ", body)
+        body = re.sub(r"\n+", "\n", body)
+        body = body.strip()
+
         text = f"Subject: {subject}\n\n{body}"
         entities = model.predict_entities(text, labels)
 
@@ -388,6 +400,41 @@ def analyze_email(body, subject):
                     result["venue"] = match.group(0).strip()
                 else:
                     result["venue"] = val
+
+        # --------------------------------------------------
+        # FALLBACK EXPLICIT EXTRACTION (Time & Venue)
+        # --------------------------------------------------
+        if not result["venue"]:
+            venue_match = re.search(r"Venue\s*:\s*(.*?)(?:\n|$)", text, re.IGNORECASE)
+            if venue_match:
+                result["venue"] = venue_match.group(1).strip()
+            else:
+                venue_words = ["Hall", "Auditorium", "Seminar Hall", "Conference Hall", "Lab", "Laboratory", "Studio", "Room", "Block", "Centre", "Center", "Complex", "Ground", "Arena", "Classroom"]
+                sentences = re.split(r"[.!?\n]+", text)
+                for sentence in sentences:
+                    sentence = sentence.strip()
+                    for word in venue_words:
+                        if word.lower() in sentence.lower():
+                            at_match = re.search(r"\bat\s+(.*)", sentence, re.IGNORECASE)
+                            if at_match:
+                                result["venue"] = at_match.group(1).strip()
+                            else:
+                                result["venue"] = sentence
+                            break
+                    if result["venue"]:
+                        break
+
+        if not result["time"] or (not result["from_time"] and not result["to_time"]):
+            time_match = re.search(r"(\d{1,2}[:.]\d{2}\s?(?:AM|PM|am|pm))\s*(?:to|-)\s*(\d{1,2}[:.]\d{2}\s?(?:AM|PM|am|pm))", text, re.IGNORECASE)
+            if time_match:
+                result["from_time"] = time_match.group(1)
+                result["to_time"] = time_match.group(2)
+                result["time"] = f"{result['from_time']} to {result['to_time']}"
+            elif not result["time"]:
+                single_time = re.search(r"\d{1,2}[:.]\d{2}\s?(?:AM|PM|am|pm)", text, re.IGNORECASE)
+                if single_time:
+                    result["from_time"] = single_time.group()
+                    result["time"] = result["from_time"]
 
         # --------------------------------------------------
         # EXPAND DATE RANGES (e.g. "July 10 to July 12" → all 3 days)
@@ -501,6 +548,48 @@ def analyze_email(body, subject):
 # print("=" * 50)
 
 # =========================================================
+# READ EMAIL (FULL IMPLEMENTATION FROM SAMPLE.PY)
+# Uncomment this when transitioning out of prototype mode
+# =========================================================
+#
+# for latest_email_id in email_ids:
+#     status, msg_data = mail.fetch(latest_email_id, "(RFC822)")
+#     for response_part in msg_data:
+#         if isinstance(response_part, tuple):
+#             msg = email.message_from_bytes(response_part[1])
+#             raw_subject = msg["Subject"]
+#             decoded_subject = decode_header(raw_subject)
+#             subject_parts = []
+#             for part, encoding in decoded_subject:
+#                 if isinstance(part, bytes):
+#                     subject_parts.append(part.decode(encoding if encoding else "utf-8", errors="ignore"))
+#                 else:
+#                     subject_parts.append(part)
+#             subject = "".join(subject_parts)
+#             
+#             email_body = ""
+#             if msg.is_multipart():
+#                 for part in msg.walk():
+#                     content_type = part.get_content_type()
+#                     try:
+#                         payload = part.get_payload(decode=True)
+#                         if payload:
+#                             text = payload.decode(errors="ignore")
+#                             if content_type == "text/plain":
+#                                 email_body = text
+#                                 break
+#                             elif content_type == "text/html" and not email_body:
+#                                 email_body = text
+#                     except:
+#                         pass
+#             else:
+#                 payload = msg.get_payload(decode=True)
+#                 if payload:
+#                     email_body = payload.decode(errors="ignore")
+#
+#             # Then process email_body and subject with analyze_email(email_body, subject)
+
+# =========================================================
 # >>>  PROTOTYPE MAIL CONTENT — EDIT THIS SECTION  <<<
 # =========================================================
 # Change the three variables below to test a new email.
@@ -509,16 +598,19 @@ def analyze_email(body, subject):
 MAIL_SENDER   = "dean@gmail.com"          # who sent the email
 MAIL_RECEIVER = "receiver@gmail.com"      # who received it
 MAIL_SUBJECT  = """
-Holiday Notice – Institution Closed on June 17, 2026
+End Semester Examination Timetable – November 2026
 """
 MAIL_BODY     = """
 Dear All,
-This is to inform all faculty, staff, and students that the institution will remain closed on June 17, 2026 on account of
-a public holiday.
-All scheduled activities, classes, and lab sessions for that day stand cancelled. Please plan accordingly.
-For any urgent matters, kindly contact your respective department offices.
+Greetings!!!
+This is to inform all students and faculty that the End Semester Examination Timetable for November 2026 has been
+released and is available on the SRMIST Student Portal.
+Examinations will commence from November 10, 2026.
+Students are advised to check their individual timetables on the portal at https://sp.srmist.edu.in and report any
+discrepancies to the Examination Cell before October 30, 2026.
+Hall tickets will be available for download from November 3, 2026.
 Thanks and Regards,
-Administrative Office
+Controller of Examinations
 SRMIST, Kattankulathur
 """
 
@@ -591,7 +683,8 @@ for subject, sender, receiver, body in [
                     "from_time":   result["from_time"],
                     "to_time":     result["to_time"],
                     "venue":       result["venue"],
-                    "link":        result.get("link")
+                    "link":        result.get("link"),
+                    "status":      "schedule"
                 }
                 add_event(entry)
 
@@ -631,7 +724,8 @@ for subject, sender, receiver, body in [
                     "from_time":   result["from_time"],
                     "to_time":     result["to_time"],
                     "venue":       result["venue"],
-                    "link":        result.get("link")
+                    "link":        result.get("link"),
+                    "status":      "reschedule"
                 }
                 add_event(entry)
 
