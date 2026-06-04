@@ -5,6 +5,7 @@ from qdrant_client.models import Filter, FieldCondition, MatchValue
 import logging
 import os
 import sqlite3
+from langsmith import traceable
 
 # Define logger for api.py
 logger = logging.getLogger(__name__)
@@ -80,6 +81,7 @@ async def update_db(payload: VectorInput, request: Request):
 
 
 # ── GET /search ────────────────────────────────────────────────
+@traceable(name="search_vectors", run_type="tool")
 @app_router.get("/search")
 async def search_vectors(query: str, request: Request):
     try:
@@ -87,7 +89,7 @@ async def search_vectors(query: str, request: Request):
         db_path      = get_db(request)
 
         # Qdrant semantic search ──────────────────────────────────
-        docs_with_scores = vector_store.similarity_search_with_score(query, k=5)
+        docs_with_scores = vector_store.similarity_search_with_score(query, k=20)
 
         results = []
         with sqlite3.connect(db_path) as con:
@@ -218,4 +220,4 @@ async def delete_post(post_id: int, request: Request):
     except Exception as e:
         logger.error(f"Error in DELETE /posts/{post_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
+

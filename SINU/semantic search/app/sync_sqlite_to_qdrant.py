@@ -45,7 +45,7 @@ VECTOR_SIZE            = 768                   # output dimension of the model
 
 parser = argparse.ArgumentParser(description="Sync SQLite posts -> Qdrant")
 parser.add_argument("--dry-run",       action="store_true", help="Print rows only, no upload")
-parser.add_argument("--batch",         type=int, default=32, metavar="N", help="Batch size (default 32)")
+parser.add_argument("--batch",         type=int, default=128, metavar="N", help="Batch size (default 32)")
 parser.add_argument("--force-recreate", action="store_true",
                     help="Delete the existing Qdrant collection and re-upload everything (use when changing embedding model)")
 args = parser.parse_args()
