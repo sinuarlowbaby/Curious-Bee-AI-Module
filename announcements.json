@@ -118,5 +118,59 @@
         "subject": "Holiday Notice – Institution Closed on June 17, 2026",
         "description": "This is to inform all faculty, staff, and students that the institution will remain closed on June 17, 2026 on account of\na public holiday.\nAll scheduled activities, classes, and lab sessions for that day stand cancelled. Please plan accordingly.\nFor any urgent matters, kindly contact your respective department offices.",
         "received_on": "2026-06-03"
+    },
+    {
+        "sender": "dean@gmail.com",
+        "subject": "Holiday Notice – Institution Closed on June 17, 2026",
+        "description": "This is to inform all faculty, staff, and students that the institution will remain closed on June 17, 2026 on account of\na public holiday.\nAll scheduled activities, classes, and lab sessions for that day stand cancelled. Please plan accordingly.\nFor any urgent matters, kindly contact your respective department offices.",
+        "received_on": "2026-06-04"
+    },
+    {
+        "sender": "dean@gmail.com",
+        "subject": "Holiday Notice – Institution Closed on June 17, 2026",
+        "description": "This is to inform all faculty, staff, and students that the institution will remain closed on June 17, 2026 on account of\na public holiday.\nAll scheduled activities, classes, and lab sessions for that day stand cancelled. Please plan accordingly.\nFor any urgent matters, kindly contact your respective department offices.",
+        "received_on": "2026-06-04"
+    },
+    {
+        "sender": "dean@gmail.com",
+        "subject": "Holiday Notice – Institution Closed on June 17, 2026",
+        "description": "This is to inform all faculty, staff, and students that the institution will remain closed on June 17, 2026 on account of\na public holiday.\nAll scheduled activities, classes, and lab sessions for that day stand cancelled. Please plan accordingly.\nFor any urgent matters, kindly contact your respective department offices.",
+        "received_on": "2026-06-04"
+    },
+    {
+        "sender": "dean@gmail.com",
+        "subject": "Rescheduled – Seminar on Artificial Intelligence and Future Technologies",
+        "description": "This is to inform you that the Seminar on Artificial Intelligence and Future Technologies which was originally\nscheduled on 14 June 2026 has been rescheduled due to unavoidable circumstances.",
+        "received_on": "2026-06-04"
+    },
+    {
+        "sender": "dean@gmail.com",
+        "subject": "Rescheduled – Seminar on Artificial Intelligence and Future Technologies",
+        "description": "This is to inform you that the Seminar on Artificial Intelligence and Future Technologies which was originally\nscheduled on 14 June 2026 has been rescheduled due to unavoidable circumstances.",
+        "received_on": "2026-06-04"
+    },
+    {
+        "sender": "dean@gmail.com",
+        "subject": "Cancellation – Workshop on Cyber Security and Ethical Hacking",
+        "description": "We regret to inform you that the Workshop on Cyber Security and Ethical Hacking scheduled on June 18, 2026 has\nbeen cancelled due to unavoidable circumstances.\nWe apologize for the inconvenience caused. A new date will be announced shortly.",
+        "received_on": "2026-06-04"
+    },
+    {
+        "sender": "dean@gmail.com",
+        "subject": "Meeting Tomorrow",
+        "description": "There will be a departmental meeting tomorrow at 11:00 AM at the Conference Room, Admin Block.",
+        "received_on": "2026-06-04"
+    },
+    {
+        "sender": "dean@gmail.com",
+        "subject": "Meeting Tomorrow",
+        "description": "There will be a departmental meeting tomorrow at 11:00 AM at the Conference Room, Admin Block.",
+        "received_on": "2026-06-04"
+    },
+    {
+        "sender": "dean@gmail.com",
+        "subject": "End Semester Examination Timetable – November 2026",
+        "description": "This is to inform all students and faculty that the End Semester Examination Timetable for November 2026 has been\nreleased and is available on the SRMIST Student Portal.",
+        "received_on": "2026-06-04"
     }
 ]
