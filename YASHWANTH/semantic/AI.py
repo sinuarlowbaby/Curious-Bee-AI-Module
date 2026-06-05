@@ -1,78 +1,26 @@
+# pyrefly: ignore [missing-import]
 from flask import Flask, render_template, request, jsonify
+
+# pyrefly: ignore [missing-import]
 from sentence_transformers import SentenceTransformer
+
+# pyrefly: ignore [missing-import]
 import chromadb
+
+import os
+import psycopg2
+from pathlib import Path
+from dotenv import load_dotenv
+
 
 app = Flask(__name__)
 
-# -----------------------------
-# SAMPLE RESEARCH POSTS
-# -----------------------------
+# Load .env from same folder as AI.py
+env_path = Path(__file__).parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
-research_posts = [
-    {
-        "id": "post_1",
-        "title": "Smart Farming AI",
-        "author": "Dr. Kumar",
-        "description": "AI based crop monitoring system using IoT sensors and machine learning.",
-        "tags": ["AI", "Agriculture", "IoT"],
-        "likes": 245,
-        "comments": 35
-    },
-    {
-        "id": "post_2",
-        "title": "Crop Disease Detection",
-        "author": "Dr. Priya",
-        "description": "Deep learning model for identifying crop diseases from plant leaf images.",
-        "tags": ["AI", "Agriculture", "DeepLearning", "ComputerVision"],
-        "likes": 190,
-        "comments": 25
-    },
-    {
-        "id": "post_3",
-        "title": "Healthcare Chatbot",
-        "author": "Dr. Raj",
-        "description": "An AI chatbot that helps users understand symptoms and basic healthcare information.",
-        "tags": ["AI", "Healthcare", "Chatbot"],
-        "likes": 175,
-        "comments": 20
-    },
-    {
-        "id": "post_4",
-        "title": "Blockchain Voting System",
-        "author": "Dr. Meena",
-        "description": "A secure voting system using blockchain technology to prevent vote tampering.",
-        "tags": ["Blockchain", "Security", "Voting"],
-        "likes": 140,
-        "comments": 15
-    },
-    {
-        "id": "post_5",
-        "title": "Medical Image Analysis",
-        "author": "Dr. Arjun",
-        "description": "Computer vision model for analyzing medical images and detecting diseases.",
-        "tags": ["AI", "Healthcare", "ComputerVision"],
-        "likes": 220,
-        "comments": 30
-    },
-    {
-        "id": "post_6",
-        "title": "AI Traffic Management",
-        "author": "Dr. Naveen",
-        "description": "Smart traffic control system using artificial intelligence and real-time monitoring.",
-        "tags": ["AI", "SmartCity", "IoT"],
-        "likes": 180,
-        "comments": 22
-    },
-    {
-        "id": "post_7",
-        "title": "Face Recognition Attendance",
-        "author": "Dr. Karthik",
-        "description": "Automated attendance system using facial recognition and deep learning.",
-        "tags": ["AI", "DeepLearning", "ComputerVision"],
-        "likes": 260,
-        "comments": 40
-    },
-]
+DATABASE_URL = os.getenv("DATABASE_URL")
+
 
 # -----------------------------
 # LOAD EMBEDDING MODEL
@@ -80,68 +28,175 @@ research_posts = [
 
 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
+
 # -----------------------------
 # CHROMADB SETUP
 # -----------------------------
 
-client = chromadb.PersistentClient(path="./researchhub_chroma_db")
+client = chromadb.PersistentClient(path="./curiousbees_supabase_chroma_db")
 
 collection = client.get_or_create_collection(
-    name="research_posts"
+    name="research_scholar_search"
 )
 
-# -----------------------------
-# STORE POSTS IN CHROMADB
-# -----------------------------
-
-for post in research_posts:
-    searchable_text = (
-        post["title"] + " " +
-        post["description"] + " " +
-        " ".join(post["tags"])
-    )
-
-    embedding = model.encode(searchable_text).tolist()
-
-    collection.upsert(
-        ids=[post["id"]],
-        documents=[searchable_text],
-        embeddings=[embedding],
-        metadatas=[{
-            "title": post["title"],
-            "author": post["author"],
-            "description": post["description"],
-            "tags": ", ".join(post["tags"]),
-            "likes": post["likes"],
-            "comments": post["comments"]
-        }]
-    )
-
-print("Research posts stored successfully!")
-
 
 # -----------------------------
-# EXACT TAG MATCH
+# FETCH DATA FROM SUPABASE
 # -----------------------------
 
-def exact_tag_match(query):
+def fetch_all_items():
+    if not DATABASE_URL:
+        raise ValueError("DATABASE_URL is missing. Check your .env file.")
+
+    connection = psycopg2.connect(DATABASE_URL)
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            item_type,
+            block,
+            department,
+            title,
+            author,
+            description,
+            tags,
+            status,
+            likes,
+            comments
+        FROM research_items;
+    """)
+
+    rows = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    items = []
+
+    for row in rows:
+        items.append({
+            "id": row[0],
+            "type": row[1],
+            "block": row[2],
+            "department": row[3],
+            "title": row[4],
+            "author": row[5],
+            "description": row[6],
+            "tags": row[7].split(","),
+            "status": row[8],
+            "likes": row[9],
+            "comments": row[10]
+        })
+
+    return items
+
+
+# -----------------------------
+# SYNC SUPABASE DATA TO CHROMADB
+# -----------------------------
+
+def sync_supabase_to_chromadb():
+    items = fetch_all_items()
+
+    for item in items:
+        searchable_text = (
+            item["type"] + " " +
+            item["block"] + " " +
+            item["department"] + " " +
+            item["title"] + " " +
+            item["author"] + " " +
+            item["description"] + " " +
+            " ".join(item["tags"]) + " " +
+            item["status"]
+        )
+
+        embedding = model.encode(searchable_text).tolist()
+
+        collection.upsert(
+            ids=[item["id"]],
+            documents=[searchable_text],
+            embeddings=[embedding],
+            metadatas=[{
+                "type": item["type"],
+                "block": item["block"],
+                "department": item["department"],
+                "title": item["title"],
+                "author": item["author"],
+                "description": item["description"],
+                "tags": ", ".join(item["tags"]),
+                "status": item["status"],
+                "likes": item["likes"],
+                "comments": item["comments"]
+            }]
+        )
+
+    print("Supabase data synced to ChromaDB successfully.")
+
+
+# -----------------------------
+# EXACT SEARCH USING SUPABASE
+# -----------------------------
+
+def exact_match(query):
     query = query.lower().strip()
-    matched_posts = []
+    like_query = "%" + query + "%"
 
-    for post in research_posts:
-        tags = [tag.lower() for tag in post["tags"]]
+    connection = psycopg2.connect(DATABASE_URL)
+    cursor = connection.cursor()
 
-        if query in tags:
-            matched_posts.append(post)
+    cursor.execute("""
+        SELECT
+            id,
+            item_type,
+            block,
+            department,
+            title,
+            author,
+            description,
+            tags,
+            status,
+            likes,
+            comments
+        FROM research_items
+        WHERE
+            LOWER(item_type) = %s
+            OR LOWER(block) = %s
+            OR LOWER(department) = %s
+            OR LOWER(tags) LIKE %s
+            OR LOWER(title) LIKE %s;
+    """, (query, query, query, like_query, like_query))
 
-    return matched_posts
+    rows = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    results = []
+
+    for row in rows:
+        results.append({
+            "id": row[0],
+            "type": row[1],
+            "block": row[2],
+            "department": row[3],
+            "title": row[4],
+            "author": row[5],
+            "description": row[6],
+            "tags": row[7].split(","),
+            "status": row[8],
+            "likes": row[9],
+            "comments": row[10]
+        })
+
+    return results
 
 
 # -----------------------------
-# SEMANTIC SEARCH
+# SEMANTIC SEARCH USING CHROMADB
 # -----------------------------
 
-def semantic_search(query, top_k=5):
+def semantic_search(query, top_k=8):
     query_embedding = model.encode(query).tolist()
 
     results = collection.query(
@@ -149,22 +204,47 @@ def semantic_search(query, top_k=5):
         n_results=top_k
     )
 
-    similar_posts = []
+    similar_items = []
 
     for i in range(len(results["ids"][0])):
         metadata = results["metadatas"][0][i]
 
-        similar_posts.append({
+        similar_items.append({
             "id": results["ids"][0][i],
+            "type": metadata["type"],
+            "block": metadata["block"],
+            "department": metadata["department"],
             "title": metadata["title"],
             "author": metadata["author"],
             "description": metadata["description"],
             "tags": metadata["tags"].split(", "),
+            "status": metadata["status"],
             "likes": metadata["likes"],
             "comments": metadata["comments"]
         })
 
-    return similar_posts
+    return similar_items
+
+
+# -----------------------------
+# MAIN SEARCH FUNCTION
+# -----------------------------
+
+def search_research_items(query):
+    exact_results = exact_match(query)
+
+    if exact_results:
+        return {
+            "search_type": "supabase_exact_search",
+            "results": exact_results
+        }
+
+    semantic_results = semantic_search(query)
+
+    return {
+        "search_type": "chromadb_semantic_search",
+        "results": semantic_results
+    }
 
 
 # -----------------------------
@@ -185,25 +265,15 @@ def search():
     data = request.json
     query = data["query"]
 
-    exact_results = exact_tag_match(query)
+    output = search_research_items(query)
 
-    if exact_results:
-        return jsonify({
-            "search_type": "exact_tag_match",
-            "results": exact_results
-        })
-
-    semantic_results = semantic_search(query)
-
-    return jsonify({
-        "search_type": "semantic_search",
-        "results": semantic_results
-    })
+    return jsonify(output)
 
 
 # -----------------------------
-# RUN FLASK APP
+# RUN APP
 # -----------------------------
 
 if __name__ == "__main__":
+    sync_supabase_to_chromadb()
     app.run(debug=True)
