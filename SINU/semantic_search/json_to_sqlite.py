@@ -1,8 +1,10 @@
 import json
 import sqlite3
+from pathlib import Path
 
-JSON_FILE = "research_dataset_1000_unique.json"
-DB_FILE = "curious_bees.db"
+BASE_DIR = Path(__file__).parent
+JSON_FILE = BASE_DIR / "research_dataset_1000_unique.json"
+DB_FILE = BASE_DIR / "curious_bees.db"
 
 with open(JSON_FILE, "r", encoding="utf-8") as f:
     data = json.load(f)

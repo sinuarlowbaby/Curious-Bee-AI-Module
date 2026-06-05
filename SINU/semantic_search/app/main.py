@@ -92,8 +92,36 @@ async def lifespan(app:FastAPI):
                     ts        INTEGER NOT NULL  -- epoch milliseconds (from client)
                 )
             """)
+
+            # ── FTS5 virtual table for keyword search (hybrid search) ──────────
+            # Porter stemmer: "searching" matches "search", "searches" etc.
+            # Standalone table (not content=posts) for simple insert/delete sync.
+            con.execute("""
+                CREATE VIRTUAL TABLE IF NOT EXISTS posts_fts
+                USING fts5(title, tag, abstract, tokenize='porter ascii')
+            """)
+
+            # Sync any existing posts not yet in the FTS index (idempotent) ────
+            already_fts = {
+                r[0] for r in con.execute("SELECT rowid FROM posts_fts").fetchall()
+            }
+            to_sync = con.execute(
+                "SELECT id, title, tag, abstract FROM posts"
+            ).fetchall()
+            new_fts_rows = [
+                (r[0], r[1] or "", r[2] or "", r[3] or "")
+                for r in to_sync
+                if r[0] not in already_fts
+            ]
+            if new_fts_rows:
+                con.executemany(
+                    "INSERT INTO posts_fts(rowid, title, tag, abstract) VALUES (?, ?, ?, ?)",
+                    new_fts_rows,
+                )
+                logger.info(f"FTS5: synced {len(new_fts_rows)} existing post(s) into keyword index")
+
             con.commit()
-        logger.info(f"SQLite ready → {app.state.db_path}")
+        logger.info(f"SQLite + FTS5 ready → {app.state.db_path}")
 
         logger.info("Server is ready!")
     except Exception as e:
