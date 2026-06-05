@@ -1,4 +1,5 @@
-# =========================================================
+
+ # =========================================================
 # SECURE EVENT EXTRACTION MAIL READER
 # Uses GLiNER for entity extraction
 # Uses keyword classifier for email type detection
@@ -30,6 +31,12 @@ IMAP_SERVER        = "imap.gmail.com"
 CALENDAR_FILE      = "calendar.json"
 ANNOUNCEMENTS_FILE = "announcements.json"
 PENDING_FILE       = "pending_emails.json"
+
+if not EMAIL_ADDRESS or not EMAIL_PASSWORD:
+    raise RuntimeError(
+        "Missing email credentials. Set EMAIL_ADDRESS and EMAIL_PASSWORD "
+        "in a .env file or in the shell environment before running gli.py."
+    )
 
 # =========================================================
 # AUTHORIZED SENDERS
@@ -846,3 +853,4 @@ mail.logout()
 print("\nLogged out. Done.")
 print(f"Events saved to       : {CALENDAR_FILE}")
 print(f"Announcements saved to: {ANNOUNCEMENTS_FILE}")
+
