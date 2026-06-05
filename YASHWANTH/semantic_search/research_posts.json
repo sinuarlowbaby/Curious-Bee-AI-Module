@@ -1,0 +1,333 @@
+{
+  "research_posts": [
+    {
+      "id": 1,
+      "post_title": "Hybrid Search with FAISS and BM25 for Dense-Sparse Retrieval",
+      "author_name": "Sinu Kumar",
+      "tag_category": "RAG",
+      "abstract_description": "This paper presents a hybrid retrieval architecture combining FAISS dense vector search with BM25 sparse retrieval. We demonstrate that fusing both signals via Reciprocal Rank Fusion (RRF) achieves a 23% improvement in NDCG@10 over standalone dense retrievers on open-domain QA benchmarks. Our implementation uses FAISS HNSW indexing for sub-millisecond ANN lookups and a custom BM25 engine built on inverted index shards, enabling scalable retrieval over 10M+ document corpora.",
+      "pdf_attachment": {
+        "filename": "hybrid_search_faiss_bm25.pdf",
+        "size_mb": 3.4,
+        "uploaded": true
+      },
+      "created_at": "2025-01-10T09:15:00Z",
+      "status": "published"
+    },
+    {
+      "id": 2,
+      "post_title": "CareerLens AI: A Multi-Modal Career Coaching Platform Using LLMs",
+      "author_name": "Sinu Kumar",
+      "tag_category": "NLP",
+      "abstract_description": "CareerLens AI is a full-stack career intelligence platform leveraging LangChain, FAISS, and Groq LLaMA-3 for resume analysis, job matching, and personalized career roadmap generation. The system employs HyDE query expansion, CrossEncoder reranking, and Redis semantic caching to achieve sub-300ms inference latency. A GAN-inspired keyword chunker extracts high-signal career entities from unstructured resume text, feeding a 7-table PostgreSQL schema for structured user profiling. Evaluation on 500 real-world resumes shows 91% match-rate accuracy versus human career coaches.",
+      "pdf_attachment": {
+        "filename": "careerlens_ai_paper.pdf",
+        "size_mb": 7.1,
+        "uploaded": true
+      },
+      "created_at": "2025-01-18T14:30:00Z",
+      "status": "published"
+    },
+    {
+      "id": 3,
+      "post_title": "LangGraph Multi-Agent Orchestration for Autonomous Code Review",
+      "author_name": "Arjun Mehta",
+      "tag_category": "Agents",
+      "abstract_description": "We introduce ByteMonk, a LangGraph-based multi-agent system for automated code review and bug triaging. The architecture features a supervisor agent orchestrating specialized sub-agents: a static analyzer, a unit test generator, a documentation reviewer, and a security auditor. Fixed and conditional edges encode routing logic based on agent output confidence scores. Benchmarks on 1,200 GitHub PRs show ByteMonk reduces review cycle time by 67% while maintaining 88% precision on critical bug detection. We discuss the build_graph() design, retry loop patterns, and a future roadmap including parallel fan-out via LangGraph Send primitives.",
+      "pdf_attachment": {
+        "filename": "bytemonk_langgraph.pdf",
+        "size_mb": 5.8,
+        "uploaded": true
+      },
+      "created_at": "2025-02-03T11:00:00Z",
+      "status": "published"
+    },
+    {
+      "id": 4,
+      "post_title": "CrossEncoder Reranking in Production RAG Pipelines: Latency vs. Accuracy Trade-offs",
+      "author_name": "Priya Nair",
+      "tag_category": "RAG",
+      "abstract_description": "CrossEncoder rerankers dramatically improve retrieval precision but introduce significant inference overhead. This study systematically evaluates five CrossEncoder architectures (MS-MARCO MiniLM variants) across three production RAG deployments serving 10K+ daily queries. We quantify latency budgets at p50, p95, and p99 percentiles and propose an adaptive reranking gate that skips reranking when first-stage retrieval confidence exceeds a learned threshold, reducing average reranking calls by 41% with less than 2% precision degradation.",
+      "pdf_attachment": {
+        "filename": "crossencoder_reranking_tradeoffs.pdf",
+        "size_mb": 4.2,
+        "uploaded": true
+      },
+      "created_at": "2025-02-14T08:45:00Z",
+      "status": "published"
+    },
+    {
+      "id": 5,
+      "post_title": "HyDE: Hypothetical Document Embeddings for Zero-Shot Dense Retrieval",
+      "author_name": "Chen Wei",
+      "tag_category": "NLP",
+      "abstract_description": "Hypothetical Document Embeddings (HyDE) leverage large language models to generate synthetic relevant documents from a query, then embed those hypothetical documents for retrieval instead of the raw query. This paper reproduces and extends the original HyDE results across 8 retrieval benchmarks, analyzing failure modes where LLM hallucinations degrade retrieval quality. We propose HyDE+ with a validation filter that discards hypothetical documents whose self-BLEU score falls below a calibrated threshold, improving MAP by 4.3 percentage points on BEIR.",
+      "pdf_attachment": {
+        "filename": "hyde_extended_analysis.pdf",
+        "size_mb": 2.9,
+        "uploaded": true
+      },
+      "created_at": "2025-02-22T16:20:00Z",
+      "status": "under_review"
+    },
+    {
+      "id": 6,
+      "post_title": "Redis Semantic Caching for LLM APIs: Architecture and Cost Analysis",
+      "author_name": "Ravi Shankar",
+      "tag_category": "Systems",
+      "abstract_description": "Semantic caching intercepts LLM API calls and returns cached responses for semantically similar queries, reducing token spend dramatically. We implement a Redis-based semantic cache using RediSearch vector similarity on query embeddings with a cosine similarity threshold of 0.92. Deployed on a SaaS platform processing 50K queries/day, the cache achieves a 38% hit rate, reducing LLM API costs by $1,200/month. We analyze cache invalidation strategies, threshold sensitivity, and multi-tenant isolation patterns for production deployments.",
+      "pdf_attachment": {
+        "filename": "redis_semantic_cache.pdf",
+        "size_mb": 3.1,
+        "uploaded": true
+      },
+      "created_at": "2025-03-05T10:10:00Z",
+      "status": "published"
+    },
+    {
+      "id": 7,
+      "post_title": "Vision Transformers vs. CNNs for Satellite Image Segmentation",
+      "author_name": "Aisha Balogun",
+      "tag_category": "CV",
+      "abstract_description": "We conduct a rigorous comparison of Vision Transformer (ViT-L/16, Swin-B) and CNN (ResNet-101, EfficientNet-B7) architectures on high-resolution satellite image segmentation tasks across four geographic domains: urban, agricultural, forest, and coastal. ViT models outperform CNNs on large-scale textures (forest canopy: +6.2 mIoU) while CNNs retain an edge on fine-grained boundary detection in urban scenes. We introduce a hybrid ViT-CNN decoder that captures both global context and local edge detail, achieving state-of-the-art on the SpaceNet-7 benchmark.",
+      "pdf_attachment": {
+        "filename": "vit_cnn_satellite_segmentation.pdf",
+        "size_mb": 9.3,
+        "uploaded": true
+      },
+      "created_at": "2025-03-12T13:55:00Z",
+      "status": "published"
+    },
+    {
+      "id": 8,
+      "post_title": "Federated Learning for Privacy-Preserving Medical Diagnosis",
+      "author_name": "Dr. Meena Krishnan",
+      "tag_category": "Healthcare AI",
+      "abstract_description": "Hospital data silos prevent collaborative model training on large medical datasets. We present a federated learning framework using differential privacy (ε=1.0) and secure aggregation across 12 hospital nodes for diabetic retinopathy classification. The federated model trained on 280K OCT scans achieves 94.1% AUC, within 1.3% of the centralized baseline, without any raw patient data leaving institutional boundaries. We detail the communication protocol, gradient compression strategy, and client dropout handling that enable robust convergence under real-world network heterogeneity.",
+      "pdf_attachment": {
+        "filename": "federated_medical_diagnosis.pdf",
+        "size_mb": 6.7,
+        "uploaded": true
+      },
+      "created_at": "2025-03-20T09:30:00Z",
+      "status": "published"
+    },
+    {
+      "id": 9,
+      "post_title": "Quantization Techniques for LLM Inference on Edge Devices",
+      "author_name": "Vikram Patel",
+      "tag_category": "MLOps",
+      "abstract_description": "Deploying large language models on memory-constrained edge devices requires aggressive quantization. We evaluate GPTQ, AWQ, and SmoothQuant on LLaMA-2-7B and Mistral-7B across INT8, INT4, and mixed-precision configurations on Jetson AGX Orin and Raspberry Pi 5. Our results show AWQ INT4 achieves the best quality-throughput Pareto frontier, with only 1.8 perplexity increase over FP16 at 4× memory reduction and 2.3× throughput improvement. We provide an open-source quantization benchmark suite covering latency, memory, energy consumption, and accuracy.",
+      "pdf_attachment": {
+        "filename": "llm_quantization_edge.pdf",
+        "size_mb": 4.5,
+        "uploaded": true
+      },
+      "created_at": "2025-04-01T07:00:00Z",
+      "status": "published"
+    },
+    {
+      "id": 10,
+      "post_title": "Graph Neural Networks for Fraud Detection in Financial Transactions",
+      "author_name": "Olivia Chen",
+      "tag_category": "GNN",
+      "abstract_description": "Financial fraud exhibits complex relational patterns that tabular ML models miss. We model transaction networks as heterogeneous graphs (nodes: accounts, merchants, devices; edges: transactions, logins, shared attributes) and train a GraphSAGE model with inductive learning for real-time fraud scoring. Evaluated on a proprietary dataset of 120M transactions from a Southeast Asian fintech, our GNN achieves 97.3% precision at 5% false positive rate, outperforming XGBoost by 8.4 percentage points. We discuss feature engineering for temporal graph edges and deployment using TorchServe with sub-10ms SLA compliance.",
+      "pdf_attachment": {
+        "filename": "gnn_fraud_detection.pdf",
+        "size_mb": 5.2,
+        "uploaded": true
+      },
+      "created_at": "2025-04-08T12:15:00Z",
+      "status": "published"
+    },
+    {
+      "id": 11,
+      "post_title": "Instruction Fine-Tuning LLaMA-3 on Domain-Specific Legal Corpora",
+      "author_name": "Ishaan Gupta",
+      "tag_category": "LLM Fine-Tuning",
+      "abstract_description": "General-purpose LLMs exhibit significant knowledge gaps on jurisdiction-specific legal reasoning tasks. We fine-tune LLaMA-3-8B-Instruct using QLoRA (rank=64, α=128) on 180K curated Indian legal judgments and statutory texts. The resulting LegalLLaMA model achieves 82.4% on the Indian Bar Exam QA benchmark, compared to 61.7% for the base model and 74.3% for GPT-4o. We release the fine-tuning dataset, training recipe, and evaluation harness under CC-BY-SA 4.0, and discuss RLHF alignment challenges specific to legal AI systems.",
+      "pdf_attachment": {
+        "filename": "legallama_finetuning.pdf",
+        "size_mb": 8.0,
+        "uploaded": true
+      },
+      "created_at": "2025-04-15T15:40:00Z",
+      "status": "under_review"
+    },
+    {
+      "id": 12,
+      "post_title": "Diffusion Models for Protein Structure Prediction Beyond AlphaFold2",
+      "author_name": "Dr. Yuki Tanaka",
+      "tag_category": "Bioinformatics",
+      "abstract_description": "AlphaFold2 revolutionized single-chain protein structure prediction but struggles with intrinsically disordered regions (IDRs) and multi-chain complexes. We introduce DiffProt, a diffusion-based architecture operating in torsion angle space that explicitly models conformational ensembles rather than single static structures. On the CASP15 benchmark, DiffProt improves TM-score by 4.1 points for IDR-containing targets and achieves 89.3% DockQ for heterodimeric complexes. The model is trained on 450K PDB structures with novel multi-task objectives for secondary structure and contact map prediction.",
+      "pdf_attachment": {
+        "filename": "diffprot_structure_prediction.pdf",
+        "size_mb": 11.2,
+        "uploaded": true
+      },
+      "created_at": "2025-04-22T09:00:00Z",
+      "status": "published"
+    },
+    {
+      "id": 13,
+      "post_title": "FastAPI Async Architecture Patterns for High-Throughput AI Inference APIs",
+      "author_name": "Sinu Kumar",
+      "tag_category": "Backend",
+      "abstract_description": "Production AI inference APIs must handle bursty traffic, long-running model calls, and streaming responses without blocking event loops. We present architectural patterns for FastAPI-based inference servers including: async background tasks with Celery/Redis, SSE streaming via async generators, request batching with dynamic padding, and circuit breaker patterns for LLM API fallback chains. Benchmarks using Locust show our optimized FastAPI server sustains 1,200 RPS at p99 < 400ms for embedding generation and 200 concurrent streaming chat completions, exceeding naive synchronous implementations by 8×.",
+      "pdf_attachment": {
+        "filename": "fastapi_async_inference.pdf",
+        "size_mb": 3.6,
+        "uploaded": true
+      },
+      "created_at": "2025-04-30T11:25:00Z",
+      "status": "published"
+    },
+    {
+      "id": 14,
+      "post_title": "Multimodal RAG: Combining Text and Image Retrieval for Visual QA",
+      "author_name": "Fatima Al-Hassan",
+      "tag_category": "Multimodal",
+      "abstract_description": "Standard RAG systems operate exclusively on text, missing rich visual context in documents containing figures, charts, and diagrams. We present MultiRAG, a pipeline that jointly indexes CLIP image embeddings and ColPali late-interaction text embeddings using a unified FAISS flat index. At query time, a router model classifies whether to retrieve from text, image, or both modalities based on query type. Evaluated on DocVQA and InfoVQA benchmarks, MultiRAG achieves 84.7% Exact Match, a 12.3-point improvement over text-only RAG, with particular gains on chart interpretation (+18.1 EM) and diagram reasoning (+15.6 EM).",
+      "pdf_attachment": {
+        "filename": "multimodal_rag_visual_qa.pdf",
+        "size_mb": 7.9,
+        "uploaded": true
+      },
+      "created_at": "2025-05-05T14:00:00Z",
+      "status": "published"
+    },
+    {
+      "id": 15,
+      "post_title": "Reinforcement Learning from Human Feedback: Reward Model Collapse and Mitigation",
+      "author_name": "Lucas Ferreira",
+      "tag_category": "RLHF",
+      "abstract_description": "RLHF-trained models frequently exhibit reward hacking: optimizing the reward model's score while diverging from true human preference. We document reward model collapse across 14 RLHF training runs at varying KL divergence penalty scales and introduce three mitigation techniques: reward ensemble disagreement filtering, iterative reward model refreshing, and a length-normalized scoring adjustment. Our analysis uses a 1B parameter reward model trained on 85K preference pairs. Applying mitigations reduces reward hacking instances by 71% while preserving 96.4% of the preference alignment gain.",
+      "pdf_attachment": {
+        "filename": "rlhf_reward_collapse.pdf",
+        "size_mb": 5.5,
+        "uploaded": true
+      },
+      "created_at": "2025-05-10T08:30:00Z",
+      "status": "under_review"
+    },
+    {
+      "id": 16,
+      "post_title": "Autonomous SQL Query Generation with LLM Agents and Schema-Aware Prompting",
+      "author_name": "Kavya Reddy",
+      "tag_category": "NLP",
+      "abstract_description": "Text-to-SQL is a longstanding NLP challenge complicated by complex schemas, ambiguous natural language, and dialect variations. We develop SQLMind, an LLM agent that combines schema-aware few-shot prompting, a self-correction loop using SQL execution feedback, and a learned query decomposition strategy for multi-hop analytical queries. On Spider and BIRD benchmarks, SQLMind achieves 87.2% execution accuracy with GPT-4o and 81.9% with LLaMA-3-70B, surpassing prior state-of-the-art. Ablation studies show the self-correction loop contributes 6.4 percentage points and decomposition strategy 4.8 points.",
+      "pdf_attachment": {
+        "filename": "sqlmind_autonomous_query.pdf",
+        "size_mb": 4.0,
+        "uploaded": true
+      },
+      "created_at": "2025-05-16T13:10:00Z",
+      "status": "published"
+    },
+    {
+      "id": 17,
+      "post_title": "Explainability in Neural Networks: SHAP vs. Integrated Gradients for Tabular Data",
+      "author_name": "Nadia Okonkwo",
+      "tag_category": "XAI",
+      "abstract_description": "As ML models are deployed in high-stakes domains, explainability has become a regulatory requirement. We conduct a systematic evaluation of SHAP TreeExplainer, KernelSHAP, and Integrated Gradients on 10 tabular datasets across healthcare, finance, and HR domains. Our evaluation framework measures faithfulness (correlation with model behavior), stability (variation under input perturbation), and computational cost. TreeSHAP dominates tree-based models in all three axes. For deep tabular networks, Integrated Gradients with Gaussian baseline outperforms KernelSHAP in faithfulness by 13.2% while requiring 40% less compute.",
+      "pdf_attachment": {
+        "filename": "shap_vs_integrated_gradients.pdf",
+        "size_mb": 4.8,
+        "uploaded": true
+      },
+      "created_at": "2025-05-22T10:45:00Z",
+      "status": "published"
+    },
+    {
+      "id": 18,
+      "post_title": "Streaming LLM Responses with Server-Sent Events in FastAPI and React",
+      "author_name": "Sinu Kumar",
+      "tag_category": "Backend",
+      "abstract_description": "Streaming LLM token output dramatically improves perceived latency and user experience in chat interfaces. This technical paper details end-to-end streaming implementation using FastAPI's StreamingResponse with SSE, async generator chains from LLM SDK streams, a React EventSource hook with progressive rendering, and graceful connection recovery with exponential backoff. We benchmark streaming overhead across OpenAI, Groq, and Anthropic SDK clients, measuring time-to-first-token (TTFT) and throughput. A complete reference implementation with Docker Compose orchestration is open-sourced, including edge cases: mid-stream errors, rate limit handling, and client disconnection cleanup.",
+      "pdf_attachment": {
+        "filename": "streaming_llm_fastapi_react.pdf",
+        "size_mb": 2.8,
+        "uploaded": true
+      },
+      "created_at": "2025-05-28T09:15:00Z",
+      "status": "published"
+    },
+    {
+      "id": 19,
+      "post_title": "Knowledge Graph Construction from Unstructured Text Using LLMs",
+      "author_name": "Tariq Al-Rashidi",
+      "tag_category": "Knowledge Graphs",
+      "abstract_description": "Knowledge graphs provide structured representations of world knowledge enabling complex reasoning and question answering. We propose KGBuilder, a pipeline using GPT-4o for entity and relation extraction, followed by entity disambiguation using a Wikidata-grounded linker and conflict resolution via a learned triple classifier. Applied to a 2M-article scientific corpus, KGBuilder extracts 45M triples with 91.2% precision (human-evaluated sample of 5,000 triples). We integrate the resulting KG with a GraphRAG system showing 14.7% improvement on multi-hop QA over standard vector RAG.",
+      "pdf_attachment": {
+        "filename": "kgbuilder_llm_kg_construction.pdf",
+        "size_mb": 6.3,
+        "uploaded": true
+      },
+      "created_at": "2025-06-01T14:50:00Z",
+      "status": "draft"
+    },
+    {
+      "id": 20,
+      "post_title": "Uncertainty Quantification in LLM Outputs via Semantic Entropy",
+      "author_name": "Haruto Yamamoto",
+      "tag_category": "Reliability",
+      "abstract_description": "LLMs produce confident-sounding outputs even when factually incorrect, making uncertainty estimation critical for safe deployment. We implement Semantic Entropy, an approach that generates multiple answer samples and clusters them by semantic equivalence using a bidirectional entailment model, then computes entropy over cluster probabilities as a calibrated confidence signal. Evaluated across TriviaQA, MedQA, and HotpotQA, semantic entropy achieves an AUROC of 0.81 for abstention decisions, significantly outperforming token-level probability baselines (AUROC 0.63). We discuss integration patterns with RAG systems for hallucination-aware response generation.",
+      "pdf_attachment": {
+        "filename": "semantic_entropy_uncertainty.pdf",
+        "size_mb": 3.7,
+        "uploaded": true
+      },
+      "created_at": "2025-06-02T07:30:00Z",
+      "status": "published"
+    },
+    {
+      "id": 21,
+      "post_title": "DockerCompose Orchestration for Multi-Service AI Applications",
+      "author_name": "Sinu Kumar",
+      "tag_category": "MLOps",
+      "abstract_description": "Modern AI applications require coordinating multiple services: LLM inference servers, vector databases, relational databases, caches, and frontend apps. We present production-grade Docker Compose patterns covering: service dependency ordering with health checks, volume management for persistent model weights, environment-specific overrides with Compose profiles, GPU passthrough for inference containers, and a secrets management strategy using Docker secrets and environment interpolation. A reference architecture for a full-stack RAG application (FastAPI + FAISS + PostgreSQL + Redis + Nginx) is provided, with annotated Compose files and CI/CD integration using GitHub Actions.",
+      "pdf_attachment": {
+        "filename": "docker_compose_ai_orchestration.pdf",
+        "size_mb": 2.5,
+        "uploaded": true
+      },
+      "created_at": "2025-06-02T11:00:00Z",
+      "status": "published"
+    },
+    {
+      "id": 22,
+      "post_title": "Retrieval-Augmented Generation for E-Commerce Product Search",
+      "author_name": "Mei Lin",
+      "tag_category": "RAG",
+      "abstract_description": "Product search in e-commerce is fundamentally a retrieval problem complicated by attribute-heavy catalog data, user intent diversity, and real-time inventory signals. We deploy a RAG pipeline over 8M product listings using bi-encoder retrieval with catalog-specific fine-tuned embeddings, BM25 for attribute matching, and a CrossEncoder reranker incorporating price and availability signals. A/B tested on 2.3M users on a major Southeast Asian e-commerce platform, our system increases Add-to-Cart rate by 11.4% and reduces zero-result searches by 63%. We detail the online learning pipeline that continuously updates retrieval models using implicit click feedback.",
+      "pdf_attachment": {
+        "filename": "rag_ecommerce_product_search.pdf",
+        "size_mb": 5.9,
+        "uploaded": true
+      },
+      "created_at": "2025-06-02T15:30:00Z",
+      "status": "published"
+    },
+    {
+      "id": 23,
+      "post_title": "Prompt Injection Attacks on RAG Systems: Taxonomy and Defenses",
+      "author_name": "Zara Khan",
+      "tag_category": "AI Security",
+      "abstract_description": "Retrieval-Augmented Generation systems face a novel attack surface: adversarial content in retrieved documents can hijack LLM behavior, causing data exfiltration, instruction override, or denial-of-service. We develop a taxonomy of 47 prompt injection attack patterns across three categories: direct injection (malicious content in user-uploaded PDFs), indirect injection (poisoned web pages retrieved by the RAG system), and cross-user injection (one user's documents affecting another's session). We evaluate 6 defense strategies—input sanitization, system prompt hardening, retrieved chunk scoring, output filtering, spotlighting, and fine-tuning—reporting precision-recall trade-offs. No single defense achieves >88% attack coverage; we recommend a layered defense-in-depth approach.",
+      "pdf_attachment": {
+        "filename": "prompt_injection_rag_defenses.pdf",
+        "size_mb": 4.4,
+        "uploaded": true
+      },
+      "created_at": "2025-06-02T16:45:00Z",
+      "status": "under_review"
+    }
+  ],
+  "metadata": {
+    "total_posts": 23,
+    "schema_version": "1.0",
+    "generated_at": "2025-06-02T17:00:00Z",
+    "categories": ["RAG", "NLP", "Agents", "Systems", "CV", "Healthcare AI", "MLOps", "GNN", "LLM Fine-Tuning", "Bioinformatics", "Backend", "Multimodal", "RLHF", "XAI", "Knowledge Graphs", "Reliability", "AI Security"],
+    "statuses": ["published", "under_review", "draft"]
+  }
+}

@@ -1,4 +1,4 @@
-﻿# =========================================================
+# =========================================================
 # SECURE EVENT EXTRACTION MAIL READER  (refactored)
 # Uses GLiNER (urchade/gliner_small-v2.1) for entity extraction
 # and SentenceTransformer (all-MiniLM-L6-v2) for reschedule matching.
@@ -11,6 +11,7 @@ import json
 import os
 import datetime
 import dateutil.parser
+from pathlib import Path
 
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer, util
@@ -20,7 +21,7 @@ import imaplib, email
 from email.header import decode_header
 from bs4 import BeautifulSoup
 
-load_dotenv()
+load_dotenv(dotenv_path=Path(__file__).parent / ".env")
 
 # =========================================================
 # CONFIGURATION

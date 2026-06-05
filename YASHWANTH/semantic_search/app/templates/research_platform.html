@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PaperStack — Research Post Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ─── RESET ──────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',sans-serif;
+  background:#0c0c0f;
+  color:#e8e4dd;
+  min-height:100vh;
+  line-height:1.6;
+  overflow-x:hidden;
+}
+
+/* ─── CSS VARIABLES ──────────────────────── */
+:root{
+  --bg:       #0c0c0f;
+  --bg1:      #111116;
+  --bg2:      #17171e;
+  --bg3:      #1e1e27;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(255,255,255,0.13);
+  --text:     #e8e4dd;
+  --muted:    #8a8690;
+  --hint:     #55535a;
+  --amber:    #e8b84b;
+  --amber2:   #c99728;
+  --amber-bg: rgba(232,184,75,0.08);
+  --amber-bg2:rgba(232,184,75,0.15);
+  --teal:     #4ecdc4;
+  --teal-bg:  rgba(78,205,196,0.08);
+  --red:      #e05555;
+  --red-bg:   rgba(224,85,85,0.1);
+  --radius:   12px;
+  --radius-sm:8px;
+  --radius-lg:18px;
+}
+
+/* ─── GRAIN OVERLAY ──────────────────────── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  background-size:200px 200px;
+  pointer-events:none;z-index:9999;opacity:.4;
+}
+
+/* ─── LAYOUT ─────────────────────────────── */
+.shell{
+  display:grid;
+  grid-template-columns:240px 1fr;
+  grid-template-rows:auto 1fr;
+  min-height:100vh;
+}
+
+/* ─── TOPBAR ─────────────────────────────── */
+.topbar{
+  grid-column:1/-1;
+  display:flex;align-items:center;gap:16px;
+  padding:0 32px;height:60px;
+  border-bottom:1px solid var(--border);
+  background:rgba(12,12,15,0.95);
+  backdrop-filter:blur(12px);
+  position:sticky;top:0;z-index:100;
+}
+.logo{
+  display:flex;align-items:center;gap:10px;
+  font-family:'Playfair Display',serif;
+  font-size:19px;font-weight:700;
+  color:var(--amber);letter-spacing:-0.3px;
+}
+.logo-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--amber);
+  box-shadow:0 0 8px var(--amber2);
+}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.topbar-stat{
+  font-size:12px;color:var(--muted);
+  padding:4px 12px;border-radius:20px;
+  border:1px solid var(--border);
+  background:var(--bg2);
+}
+.topbar-stat span{color:var(--amber);font-weight:500;}
+
+/* ─── SIDEBAR ────────────────────────────── */
+.sidebar{
+  border-right:1px solid var(--border);
+  padding:28px 0;
+  background:var(--bg1);
+  position:sticky;top:60px;height:calc(100vh - 60px);
+  overflow-y:auto;
+}
+.sidebar-section-label{
+  font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--hint);padding:0 24px 10px;font-weight:500;
+}
+.nav-item{
+  display:flex;align-items:center;gap:11px;
+  padding:10px 24px;cursor:pointer;
+  font-size:14px;color:var(--muted);
+  transition:all .15s;border-left:2px solid transparent;
+  user-select:none;
+}
+.nav-item:hover{color:var(--text);background:var(--bg2);}
+.nav-item.active{
+  color:var(--amber);
+  border-left-color:var(--amber);
+  background:var(--amber-bg);
+}
+.nav-icon{font-size:16px;width:18px;text-align:center;}
+.nav-divider{height:1px;background:var(--border);margin:16px 0;}
+
+.sidebar-posts-label{
+  font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--hint);padding:8px 24px 6px;font-weight:500;
+}
+.sidebar-post-item{
+  display:flex;align-items:flex-start;gap:8px;
+  padding:8px 24px;cursor:pointer;
+  transition:background .15s;
+}
+.sidebar-post-item:hover{background:var(--bg2);}
+.sidebar-post-item.active{background:var(--bg3);}
+.sp-dot{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--amber2);margin-top:7px;flex-shrink:0;
+}
+.sp-title{
+  font-size:12px;line-height:1.4;color:var(--muted);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.sidebar-post-item:hover .sp-title{color:var(--text);}
+
+/* ─── MAIN ───────────────────────────────── */
+.main{overflow-y:auto;height:calc(100vh - 60px);}
+
+/* ─── PAGES ──────────────────────────────── */
+.page{display:none;padding:40px 44px;animation:fadeIn .25s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.page-header{margin-bottom:36px;}
+.page-eyebrow{
+  font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--amber);font-weight:500;margin-bottom:8px;
+}
+.page-title{
+  font-family:'Playfair Display',serif;
+  font-size:30px;font-weight:700;
+  color:var(--text);line-height:1.2;
+  margin-bottom:8px;
+}
+.page-subtitle{font-size:14px;color:var(--muted);}
+
+/* ─── FORM ELEMENTS ──────────────────────── */
+.field{margin-bottom:22px;}
+.field label{
+  display:block;font-size:12px;font-weight:500;
+  letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:8px;
+}
+.field input[type="text"],
+.field textarea{
+  width:100%;background:var(--bg2);
+  border:1px solid var(--border2);border-radius:var(--radius-sm);
+  color:var(--text);font-family:'DM Sans',sans-serif;
+  font-size:14px;padding:11px 14px;outline:none;
+  transition:border-color .2s, box-shadow .2s;
+}
+.field input[type="text"]:focus,
+.field textarea:focus{
+  border-color:var(--amber2);
+  box-shadow:0 0 0 3px rgba(232,184,75,0.1);
+}
+.field input[type="text"]::placeholder,
+.field textarea::placeholder{color:var(--hint);}
+.field textarea{resize:vertical;min-height:130px;line-height:1.7;}
+
+/* ─── DROP ZONE ──────────────────────────── */
+.drop-zone{
+  border:1.5px dashed var(--border2);border-radius:var(--radius);
+  padding:36px 24px;text-align:center;cursor:pointer;
+  transition:all .2s;background:var(--bg2);
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+}
+.drop-zone:hover,.drop-zone.drag-over{
+  border-color:var(--amber);background:var(--amber-bg);
+}
+.drop-zone-icon{
+  width:52px;height:52px;border-radius:14px;
+  background:var(--bg3);border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;transition:all .2s;
+}
+.drop-zone:hover .drop-zone-icon,.drop-zone.drag-over .drop-zone-icon{
+  background:var(--amber-bg2);border-color:var(--amber2);color:var(--amber);
+}
+.drop-zone.has-file .drop-zone-icon{
+  background:var(--amber-bg2);border-color:var(--amber2);color:var(--amber);
+}
+.dz-main{font-size:14px;color:var(--muted);}
+.dz-main strong{color:var(--text);}
+.dz-sub{font-size:12px;color:var(--hint);}
+#pdf-input{display:none;}
+
+.file-pill{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 12px;border-radius:20px;
+  background:var(--amber-bg2);border:1px solid var(--amber2);
+  font-size:12px;color:var(--amber);font-family:'DM Mono',monospace;
+  margin-top:10px;
+}
+.pill-remove{cursor:pointer;opacity:.6;font-size:14px;}
+.pill-remove:hover{opacity:1;}
+
+/* ─── SUBMIT BTN ─────────────────────────── */
+.btn-submit{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;padding:13px 24px;
+  background:var(--amber);color:#0c0c0f;
+  border:none;border-radius:var(--radius-sm);
+  font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;
+  cursor:pointer;transition:all .15s;
+  letter-spacing:.02em;
+}
+.btn-submit:hover{background:var(--amber2);transform:translateY(-1px);}
+.btn-submit:active{transform:scale(.99);}
+
+/* ─── TOAST ──────────────────────────────── */
+.toast{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 16px;border-radius:var(--radius-sm);
+  background:rgba(78,205,196,0.1);border:1px solid rgba(78,205,196,.3);
+  color:var(--teal);font-size:13px;margin-top:16px;
+  opacity:0;transform:translateY(4px);transition:all .3s;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateY(0);pointer-events:auto;}
+
+/* ─── SEARCH PAGE ────────────────────────── */
+.search-bar-wrap{
+  position:relative;margin-bottom:24px;
+}
+.search-bar-wrap svg{
+  position:absolute;left:16px;top:50%;transform:translateY(-50%);
+  color:var(--hint);pointer-events:none;
+}
+.search-input{
+  width:100%;background:var(--bg2);
+  border:1px solid var(--border2);border-radius:var(--radius);
+  color:var(--text);font-family:'DM Sans',sans-serif;
+  font-size:15px;padding:14px 16px 14px 46px;outline:none;
+  transition:border-color .2s, box-shadow .2s;
+}
+.search-input:focus{
+  border-color:var(--amber2);
+  box-shadow:0 0 0 3px rgba(232,184,75,.1);
+}
+.search-input::placeholder{color:var(--hint);}
+
+.filter-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.chip{
+  padding:5px 14px;border-radius:20px;font-size:12px;cursor:pointer;
+  border:1px solid var(--border2);background:var(--bg2);color:var(--muted);
+  transition:all .13s;font-family:'DM Sans',sans-serif;font-weight:500;
+}
+.chip:hover{border-color:var(--border2);color:var(--text);}
+.chip.active{background:var(--amber-bg2);border-color:var(--amber2);color:var(--amber);}
+
+.search-meta{font-size:12px;color:var(--hint);margin-bottom:20px;}
+.search-meta em{color:var(--amber);font-style:normal;font-weight:500;}
+
+/* ─── POST CARDS ─────────────────────────── */
+.posts-grid{display:flex;flex-direction:column;gap:14px;}
+.post-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:22px 24px;
+  cursor:pointer;transition:all .18s;
+  position:relative;overflow:hidden;
+}
+.post-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;
+  width:3px;background:transparent;transition:background .2s;
+}
+.post-card:hover{border-color:var(--border2);background:var(--bg3);}
+.post-card:hover::before{background:var(--amber);}
+
+.pc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px;}
+.pc-title{
+  font-family:'Playfair Display',serif;
+  font-size:17px;font-weight:500;color:var(--text);
+  line-height:1.35;
+}
+.pc-badges{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;}
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;
+}
+.badge-pdf{background:var(--amber-bg2);border:1px solid var(--amber2);color:var(--amber);}
+.badge-new{background:rgba(78,205,196,.1);border:1px solid rgba(78,205,196,.3);color:var(--teal);}
+
+.pc-abstract{
+  font-size:13px;color:var(--muted);line-height:1.65;
+  margin-bottom:14px;
+}
+.pc-footer{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.pc-meta{
+  display:flex;align-items:center;gap:5px;
+  font-size:11px;color:var(--hint);
+  font-family:'DM Mono',monospace;
+}
+
+/* ─── SCORE BAR ──────────────────────────── */
+.score-row{
+  display:flex;align-items:center;gap:10px;
+  margin-top:12px;padding-top:12px;
+  border-top:1px solid var(--border);
+}
+.score-label{font-size:11px;color:var(--hint);min-width:90px;}
+.score-track{flex:1;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;}
+.score-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--amber2),var(--amber));transition:width .4s ease;}
+.score-pct{font-size:11px;color:var(--amber);min-width:32px;text-align:right;font-family:'DM Mono',monospace;}
+
+/* ─── EMPTY STATE ────────────────────────── */
+.empty-state{
+  text-align:center;padding:60px 20px;
+  color:var(--hint);
+}
+.empty-icon{font-size:40px;margin-bottom:14px;opacity:.4;}
+.empty-state h3{font-size:16px;color:var(--muted);font-weight:400;margin-bottom:6px;}
+.empty-state p{font-size:13px;}
+
+/* ─── VIEWER PAGE ────────────────────────── */
+.viewer-back{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:13px;color:var(--muted);cursor:pointer;
+  margin-bottom:28px;padding:6px 12px;
+  border-radius:var(--radius-sm);border:1px solid var(--border);
+  background:var(--bg2);transition:all .15s;
+}
+.viewer-back:hover{color:var(--text);border-color:var(--border2);}
+
+.viewer-hero{
+  border-bottom:1px solid var(--border);
+  padding-bottom:28px;margin-bottom:28px;
+}
+.viewer-eyebrow{
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--amber);font-weight:500;margin-bottom:12px;
+}
+.viewer-title{
+  font-family:'Playfair Display',serif;
+  font-size:32px;font-weight:700;line-height:1.25;
+  color:var(--text);margin-bottom:16px;
+}
+.viewer-meta-row{display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
+.viewer-meta{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--hint);font-family:'DM Mono',monospace;
+}
+
+.viewer-section{margin-bottom:28px;}
+.viewer-section-title{
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--hint);font-weight:500;margin-bottom:12px;
+}
+.viewer-abstract{
+  font-size:15px;color:var(--muted);line-height:1.8;
+  background:var(--bg2);border-left:3px solid var(--amber2);
+  padding:18px 22px;border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.pdf-preview-card{
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:var(--radius);padding:20px 24px;
+  display:flex;align-items:center;gap:16px;
+}
+.pdf-icon-big{
+  width:52px;height:52px;border-radius:12px;
+  background:var(--amber-bg2);border:1px solid var(--amber2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;flex-shrink:0;
+}
+.pdf-info h4{font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px;}
+.pdf-info p{font-size:12px;color:var(--hint);font-family:'DM Mono',monospace;}
+.btn-download{
+  margin-left:auto;padding:8px 18px;
+  background:var(--amber);color:#0c0c0f;
+  border:none;border-radius:var(--radius-sm);
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;
+  cursor:pointer;transition:all .15s;
+}
+.btn-download:hover{background:var(--amber2);}
+
+/* ─── DELETE BTN ─────────────────────────────── */
+.btn-danger{
+  padding:8px 18px;
+  background:transparent;color:var(--red);
+  border:1px solid var(--red);border-radius:var(--radius-sm);
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;
+  cursor:pointer;transition:all .15s;margin-left:auto;
+}
+.btn-danger:hover{background:var(--red-bg);border-color:var(--red);}
+
+/* ─── SCROLLBAR ──────────────────────────── */
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:var(--bg1);}
+::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:#2e2e3a;}
+
+/* ─── FORM GRID ──────────────────────────── */
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:700px){.form-grid-2{grid-template-columns:1fr;}.shell{grid-template-columns:1fr;}.sidebar{display:none;}.main{height:calc(100vh - 60px);}.page{padding:28px 20px;}}
+
+/* ─── UPLOAD SPLIT LAYOUT ────────────────── */
+.upload-layout{display:grid;grid-template-columns:1fr 380px;gap:40px;align-items:start;}
+@media(max-width:900px){.upload-layout{grid-template-columns:1fr;}}
+
+.upload-tips{
+  position:sticky;top:20px;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:22px;
+}
+.tips-title{
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--hint);font-weight:500;margin-bottom:14px;
+}
+.tip-item{
+  display:flex;gap:10px;margin-bottom:14px;
+}
+.tip-num{
+  width:20px;height:20px;border-radius:50%;
+  background:var(--amber-bg2);border:1px solid var(--amber2);
+  color:var(--amber);font-size:10px;font-weight:500;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-top:1px;
+}
+.tip-text{font-size:13px;color:var(--muted);line-height:1.5;}
+.tip-text strong{color:var(--text);}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      PaperStack
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-stat" id="topbar-count"><span>0</span> posts</div>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section-label">Navigation</div>
+
+    <div class="nav-item active" onclick="showPage('search')" id="nav-search">
+      <span class="nav-icon">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+      </span>
+      Search posts
+    </div>
+    <div class="nav-item" onclick="showPage('upload')" id="nav-upload">
+      <span class="nav-icon">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 15V3m0 0-4 4m4-4 4 4"/><path d="M2 17v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2"/></svg>
+      </span>
+      Upload post
+    </div>
+
+    <div class="nav-divider"></div>
+
+    <div class="sidebar-posts-label">Recent posts</div>
+    <div id="sidebar-posts"></div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ── SEARCH PAGE ── -->
+    <div class="page active" id="page-search">
+      <div class="page-header">
+        <div class="page-eyebrow">Discover</div>
+        <h1 class="page-title">Research Posts</h1>
+        <p class="page-subtitle">Browse, filter, and search through all uploaded research.</p>
+      </div>
+
+      <div class="search-bar-wrap">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>
+        <input class="search-input" id="search-input" type="text" placeholder="Search by title, keyword, or topic…" oninput="handleSearch()" />
+      </div>
+
+      <div class="filter-chips">
+        <button class="chip active" data-filter="all" onclick="setFilter(this,'all')">All posts</button>
+        <button class="chip" data-filter="pdf" onclick="setFilter(this,'pdf')">Has PDF</button>
+        <button class="chip" data-filter="recent" onclick="setFilter(this,'recent')">Recent</button>
+      </div>
+
+      <p class="search-meta" id="search-meta"></p>
+      <div class="posts-grid" id="posts-grid"></div>
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon">📄</div>
+        <h3>No posts yet</h3>
+        <p>Go to <strong style="color:var(--amber)">Upload post</strong> to add your first research post.</p>
+      </div>
+    </div>
+
+    <!-- ── UPLOAD PAGE ── -->
+    <div class="page" id="page-upload">
+      <div class="page-header">
+        <div class="page-eyebrow">Submit</div>
+        <h1 class="page-title">Upload a Post</h1>
+        <p class="page-subtitle">Add a new research post with abstract and optional PDF.</p>
+      </div>
+
+      <div class="upload-layout">
+        <div>
+          <div class="field">
+            <label for="post-title">Post title</label>
+            <input type="text" id="post-title" placeholder="e.g. Hybrid Search with FAISS and BM25…" />
+          </div>
+
+          <div class="form-grid-2">
+            <div class="field">
+              <label for="post-author">Author name</label>
+              <input type="text" id="post-author" placeholder="Your name" />
+            </div>
+            <div class="field">
+              <label for="post-tag">Tag / category</label>
+              <input type="text" id="post-tag" placeholder="e.g. NLP, CV, RAG…" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="post-abstract">Abstract / description</label>
+            <textarea id="post-abstract" placeholder="Write a concise abstract or description of your research…"></textarea>
+          </div>
+
+          <div class="field">
+            <label>PDF attachment <span style="color:var(--hint);font-size:10px;text-transform:none;letter-spacing:0">(optional)</span></label>
+            <div class="drop-zone" id="drop-zone"
+              onclick="document.getElementById('pdf-input').click()"
+              ondragover="handleDragOver(event)"
+              ondragleave="handleDragLeave(event)"
+              ondrop="handleDrop(event)">
+              <div class="drop-zone-icon">
+                <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              </div>
+              <div class="dz-main" id="dz-label"><strong>Drop PDF here</strong> or click to browse</div>
+              <div class="dz-sub" id="dz-sub">PDF up to 50 MB · Single file</div>
+            </div>
+            <input type="file" id="pdf-input" accept=".pdf" onchange="handleFileSelect(this)" />
+            <div id="file-pill-wrap"></div>
+          </div>
+
+          <button class="btn-submit" onclick="handleSubmit()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15V3m0 0-4 4m4-4 4 4"/><path d="M2 17v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2"/></svg>
+            Submit post
+          </button>
+
+          <div class="toast" id="toast">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Post submitted! Find it in <strong style="margin:0 4px">Search posts</strong>.
+          </div>
+        </div>
+
+        <!-- Tips panel -->
+        <div class="upload-tips">
+          <div class="tips-title">Writing tips</div>
+          <div class="tip-item">
+            <div class="tip-num">1</div>
+            <div class="tip-text"><strong>Clear title</strong> — be specific about the method or finding, not just the topic area.</div>
+          </div>
+          <div class="tip-item">
+            <div class="tip-num">2</div>
+            <div class="tip-text"><strong>Structured abstract</strong> — include problem, approach, and key result in 3–5 sentences.</div>
+          </div>
+          <div class="tip-item">
+            <div class="tip-num">3</div>
+            <div class="tip-text"><strong>Tag precisely</strong> — one or two concise tags help filter later (e.g. "RAG" not "AI").</div>
+          </div>
+          <div class="tip-item">
+            <div class="tip-num">4</div>
+            <div class="tip-text"><strong>PDF ready?</strong> — attach your full paper or report for richer search and viewing.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── VIEWER PAGE ── -->
+    <div class="page" id="page-viewer">
+      <!-- hidden: stores the current post's SQLite id for delete -->
+      <span id="vw-post-id" data-id=""></span>
+
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px;">
+        <div class="viewer-back" onclick="showPage('search')" style="margin-bottom:0">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5m0 0 7-7m-7 7 7 7"/></svg>
+          Back to search
+        </div>
+        <!-- <button class="btn-danger" id="btn-delete-post" onclick="deletePost()">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:5px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6m4-6v6"/><path d="M9 6V4h6v2"/></svg>
+          Delete post
+        </button> -->
+      </div>
+
+      <div class="viewer-hero">
+        <div class="viewer-eyebrow" id="vw-tag">Research</div>
+        <h1 class="viewer-title" id="vw-title">Post title</h1>
+        <div class="viewer-meta-row">
+          <span class="viewer-meta" id="vw-author">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M5.2 20a7 7 0 0 1 13.6 0"/></svg>
+            <span id="vw-author-text">—</span>
+          </span>
+          <span class="viewer-meta" id="vw-date">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span id="vw-date-text">—</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="viewer-section">
+        <div class="viewer-section-title">Abstract</div>
+        <div class="viewer-abstract" id="vw-abstract">—</div>
+      </div>
+
+      <div class="viewer-section" id="vw-pdf-section" style="display:none">
+        <div class="viewer-section-title">Attached PDF</div>
+        <div class="pdf-preview-card">
+          <div class="pdf-icon-big">
+            <svg width="22" height="22" fill="none" stroke="#e8b84b" stroke-width="1.6" viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div class="pdf-info">
+            <h4 id="vw-pdf-name">document.pdf</h4>
+            <p id="vw-pdf-size">—</p>
+          </div>
+          <button class="btn-download" id="vw-download-btn">Download</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── STATE ───────────────────────────────────
+let posts = [];
+let currentFile = null;
+let activeFilter = 'all';
+
+// ── NAVIGATION ─────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const nav = document.getElementById('nav-' + id);
+  if (nav) nav.classList.add('active');
+  if (id === 'search') renderPosts(document.getElementById('search-input').value);
+}
+
+function openViewer(post) {
+  document.getElementById('vw-post-id').dataset.id = post.id ?? '';
+  document.getElementById('vw-tag').textContent = post.tag || 'Research';
+  document.getElementById('vw-title').textContent = post.title;
+  document.getElementById('vw-author-text').textContent = post.author || 'Anonymous';
+  document.getElementById('vw-date-text').textContent = post.date;
+  document.getElementById('vw-abstract').textContent = post.abstract || 'No abstract provided.';
+  // Show delete button only if post has a known SQLite id
+  document.getElementById('btn-delete-post').style.display = post.id ? 'inline-flex' : 'none';
+  const pdfSec = document.getElementById('vw-pdf-section');
+  if (post.hasPdf) {
+    pdfSec.style.display = 'block';
+    document.getElementById('vw-pdf-name').textContent = post.pdfName;
+    document.getElementById('vw-pdf-size').textContent = post.pdfSize;
+  } else {
+    pdfSec.style.display = 'none';
+  }
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-viewer').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector('.main').scrollTop = 0;
+}
+
+// ── DELETE POST ─────────────────────────────────────────────────
+<!-- ── 
+  async function deletePost() {
+  const postId = document.getElementById('vw-post-id').dataset.id;
+  if (!postId) return;
+
+  const title = document.getElementById('vw-title').textContent;
+  if (!confirm(`Delete "${title}"?\n\nThis will remove it from SQLite and Qdrant permanently.`)) return;
+
+  try {
+    const res = await fetch(`/posts/${postId}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const err = await res.json();
+      alert('Delete failed: ' + (err.detail || res.status));
+      return;
+    }
+    // Remove from local posts array
+    posts = posts.filter(p => String(p.id) !== String(postId));
+    updateSidebar();
+    updateCount();
+    showPage('search');
+  } catch (err) {
+    console.error('Delete error:', err);
+    alert('Network error while deleting.');
+  }
+}
+-->
+
+// ── DROP ZONE ───────────────────────────────
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.add('drag-over');
+}
+function handleDragLeave() {
+  document.getElementById('drop-zone').classList.remove('drag-over');
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') setFile(file);
+}
+function handleFileSelect(input) {
+  if (input.files[0]) setFile(input.files[0]);
+}
+function setFile(file) {
+  currentFile = file;
+  const dz = document.getElementById('drop-zone');
+  dz.classList.add('has-file');
+  document.getElementById('dz-label').innerHTML = `<strong>${file.name}</strong>`;
+  document.getElementById('dz-sub').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+  const wrap = document.getElementById('file-pill-wrap');
+  wrap.innerHTML = `<div class="file-pill">📄 ${file.name} <span class="pill-remove" onclick="removeFile()">✕</span></div>`;
+}
+function removeFile() {
+  currentFile = null;
+  document.getElementById('drop-zone').classList.remove('has-file');
+  document.getElementById('dz-label').innerHTML = `<strong>Drop PDF here</strong> or click to browse`;
+  document.getElementById('dz-sub').textContent = 'PDF up to 50 MB · Single file';
+  document.getElementById('file-pill-wrap').innerHTML = '';
+  document.getElementById('pdf-input').value = '';
+}
+
+// ── SUBMIT ──────────────────────────────────
+function handleSubmit() {
+  const title = document.getElementById('post-title').value.trim();
+  if (!title) {
+    document.getElementById('post-title').style.borderColor = '#e05555';
+    document.getElementById('post-title').focus();
+    setTimeout(() => document.getElementById('post-title').style.borderColor = '', 1500);
+    return;
+  }
+  const now = new Date();
+  const post = {
+    id: Date.now(),
+    title,
+    author: document.getElementById('post-author').value.trim() || 'Anonymous',
+    tag: document.getElementById('post-tag').value.trim() || 'Research',
+    abstract: document.getElementById('post-abstract').value.trim(),
+    hasPdf: !!currentFile,
+    pdfName: currentFile ? currentFile.name : null,
+    pdfSize: currentFile ? (currentFile.size / 1024 / 1024).toFixed(2) + ' MB' : null,
+    date: now.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }),
+    ts: now.getTime()
+  };
+  posts.unshift(post);
+  updateSidebar();
+  updateCount();
+
+  // Save post to SQLite + index in Qdrant
+  fetch('/update_db', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      title:    post.title,
+      author:   post.author,
+      tag:      post.tag,
+      abstract: post.abstract || '',
+      date:     post.date,
+      ts:       post.ts        // epoch ms — stored in SQLite for sorting
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log('Saved to SQLite + Qdrant:', data);
+    if (data.id) post.id = data.id;  // update local post with SQLite id
+  })
+  .catch(err => {
+    console.error('Error saving post:', err);
+  });
+
+  // Reset form
+  document.getElementById('post-title').value = '';
+  document.getElementById('post-author').value = '';
+  document.getElementById('post-tag').value = '';
+  document.getElementById('post-abstract').value = '';
+  removeFile();
+
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3500);
+}
+
+// ── SEARCH ──────────────────────────────────
+async function handleSearch() {
+  const query = document.getElementById('search-input').value.trim();
+  const meta = document.getElementById('search-meta');
+  const grid = document.getElementById('posts-grid');
+  const empty = document.getElementById('empty-state');
+  
+  if (!query) {
+    renderPosts('');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/search?query=${encodeURIComponent(query)}`);
+    const results = await response.json();
+    
+    if (results.length === 0) {
+      grid.innerHTML = '';
+      empty.style.display = 'block';
+      meta.innerHTML = `No results found for "<em>${query}</em>"`;
+      return;
+    }
+    
+    empty.style.display = 'none';
+    meta.innerHTML = `Showing <em>${results.length}</em> semantic match${results.length !== 1 ? 'es' : ''} for "<em>${query}</em>"`;
+    
+    grid.innerHTML = results.map(p => {
+      const scorePercentage = Math.round(p.score * 100);
+      return `
+        <div class="post-card">
+          <div class="pc-top">
+            <div class="pc-title">${p.title}</div>
+          </div>
+          <p class="pc-abstract">${p.abstract ? (p.abstract.length > 220 ? p.abstract.slice(0,220)+'…' : p.abstract) : '<em style="color:var(--hint)">No abstract</em>'}</p>
+          <div class="pc-footer">
+            <span class="pc-meta">
+              <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M5.2 20a7 7 0 0 1 13.6 0"/></svg>
+              ${p.author}
+            </span>
+            <span class="pc-meta">
+              <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+              ${p.date}
+            </span>
+            ${p.tag ? `<span class="pc-meta" style="color:var(--amber);border:1px solid var(--amber2);padding:2px 8px;border-radius:20px;background:var(--amber-bg)">${p.tag}</span>` : ''}
+          </div>
+          <div class="score-row">
+            <span class="score-label">Semantic Match</span>
+            <div class="score-track"><div class="score-fill" style="width:${scorePercentage}%"></div></div>
+            <span class="score-pct">${scorePercentage}%</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Semantic search failed, falling back to local search:', err);
+    renderPosts(query);
+  }
+}
+
+function setFilter(el, filter) {
+  document.querySelectorAll('.filter-chips .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  activeFilter = filter;
+  renderPosts(document.getElementById('search-input').value);
+}
+
+function scorePost(post, query) {
+  if (!query.trim()) return 1;
+  const q = query.toLowerCase();
+  const words = q.split(/\s+/).filter(Boolean);
+  let score = 0;
+  const titleLow = post.title.toLowerCase();
+  const absLow = (post.abstract || '').toLowerCase();
+  const tagLow = (post.tag || '').toLowerCase();
+  if (titleLow.includes(q)) score += 0.8;
+  if (absLow.includes(q)) score += 0.3;
+  if (tagLow.includes(q)) score += 0.2;
+  words.forEach(w => {
+    if (titleLow.includes(w)) score += 0.25;
+    if (absLow.includes(w)) score += 0.1;
+    if (tagLow.includes(w)) score += 0.1;
+  });
+  return Math.min(score, 1);
+}
+
+function renderPosts(query) {
+  const grid = document.getElementById('posts-grid');
+  const empty = document.getElementById('empty-state');
+  const meta = document.getElementById('search-meta');
+  let filtered = [...posts];
+  const now = Date.now();
+
+  if (activeFilter === 'pdf') filtered = filtered.filter(p => p.hasPdf);
+  if (activeFilter === 'recent') filtered = filtered.filter(p => (now - p.ts) < 7 * 24 * 60 * 60 * 1000);
+
+  let scored = filtered.map(p => ({ ...p, _score: scorePost(p, query) }));
+  if (query.trim()) scored = scored.filter(p => p._score > 0).sort((a, b) => b._score - a._score);
+
+  if (scored.length === 0 && posts.length === 0) {
+    empty.style.display = 'block'; grid.innerHTML = ''; meta.textContent = ''; return;
+  }
+  empty.style.display = 'none';
+
+  if (query.trim()) {
+    meta.innerHTML = `<em>${scored.length}</em> result${scored.length !== 1 ? 's' : ''} for "<em>${query}</em>" — ranked by relevance`;
+  } else {
+    meta.innerHTML = `Showing <em>${scored.length}</em> post${scored.length !== 1 ? 's' : ''}`;
+  }
+
+  grid.innerHTML = scored.map(p => `
+    <div class="post-card" onclick="openViewer(posts.find(x=>x.id===${p.id}))">
+      <div class="pc-top">
+        <div class="pc-title">${p.title}</div>
+        <div class="pc-badges">
+          ${p.hasPdf ? `<span class="badge badge-pdf">PDF</span>` : ''}
+          ${(now - p.ts) < 60 * 60 * 1000 ? `<span class="badge badge-new">New</span>` : ''}
+        </div>
+      </div>
+      <p class="pc-abstract">${p.abstract ? (p.abstract.length > 220 ? p.abstract.slice(0,220)+'…' : p.abstract) : '<em style="color:var(--hint)">No abstract</em>'}</p>
+      <div class="pc-footer">
+        <span class="pc-meta">
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M5.2 20a7 7 0 0 1 13.6 0"/></svg>
+          ${p.author}
+        </span>
+        <span class="pc-meta">
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+          ${p.date}
+        </span>
+        ${p.tag ? `<span class="pc-meta" style="color:var(--amber);border:1px solid var(--amber2);padding:2px 8px;border-radius:20px;background:var(--amber-bg)">${p.tag}</span>` : ''}
+      </div>
+      ${query.trim() ? `
+      <div class="score-row">
+        <span class="score-label">Relevance</span>
+        <div class="score-track"><div class="score-fill" style="width:${Math.round(p._score*100)}%"></div></div>
+        <span class="score-pct">${Math.round(p._score*100)}%</span>
+      </div>` : ''}
+    </div>
+  `).join('');
+}
+
+function updateSidebar() {
+  const el = document.getElementById('sidebar-posts');
+  el.innerHTML = posts.slice(0, 8).map(p => `
+    <div class="sidebar-post-item" onclick="openViewer(p)">
+      <div class="sp-dot"></div>
+      <div class="sp-title">${p.title}</div>
+    </div>
+  `).join('');
+  // Re-bind onclick properly
+  const items = el.querySelectorAll('.sidebar-post-item');
+  posts.slice(0, 8).forEach((p, i) => {
+    items[i].onclick = () => openViewer(p);
+  });
+}
+
+function updateCount() {
+  document.getElementById('topbar-count').innerHTML = `<span>${posts.length}</span> post${posts.length !== 1 ? 's' : ''}`;
+}
+
+// init
+async function initApp() {
+  try {
+    const res = await fetch('/posts');
+    const data = await res.json();
+    // Normalise server posts — they won't have PDF info
+    posts = data.map(p => ({ ...p, hasPdf: false, pdfName: null, pdfSize: null }));
+    updateSidebar();
+    updateCount();
+    renderPosts('');
+  } catch (err) {
+    console.error('Failed to load posts from server:', err);
+    renderPosts('');
+  }
+}
+initApp();
+</script>
+</body>
+</html>
