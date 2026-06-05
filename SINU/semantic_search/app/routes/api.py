@@ -259,6 +259,9 @@ async def search_vectors(query: str, request: Request, tag: str = None):
                         "score":    round(semantic_score_map.get(sqlite_id, rrf_score), 6),
                     })
 
+        # Sort by score descending so highest-scoring results appear first ────
+        results.sort(key=lambda x: x["score"], reverse=True)
+
         return results
 
     except Exception as e:
