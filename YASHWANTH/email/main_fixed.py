@@ -11,6 +11,7 @@ import json
 import os
 import datetime
 import dateutil.parser
+from pathlib import Path
 
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer, util
@@ -20,8 +21,10 @@ import imaplib, email
 from email.header import decode_header
 from bs4 import BeautifulSoup
 
+
 env_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(env_path)
+
 
 # =========================================================
 # CONFIGURATION
@@ -55,7 +58,7 @@ VENUE_KEYWORDS = [
     "Complex", "Ground", "Arena", "Classroom",
 ]
 
-# Unicode dash variants Ã¢â‚¬â€ used in normalize_dashes() and time-splitting
+# Unicode dash variants — used in normalize_dashes() and time-splitting
 DASH_CHARS = r"[\u2013\u2014\u2015\u2212\ufe58\ufe63\uff0d]"
 
 # Pre-compiled regex patterns (were rebuilt on every call in the original)
@@ -150,7 +153,7 @@ def update_event(old_entries: list[dict], new_dates: list,
             "status":    "reschedule",
         })
         old_dates_str = ", ".join(e["date"] for e in old_entries)
-        print(f"  [UPDATED] '{title}' Ã¢â‚¬â€ [{old_dates_str}] Ã¢â€ â€™ {date}")
+        print(f"  [UPDATED] '{title}' — [{old_dates_str}] → {date}")
     _save_json(CALENDAR_FILE, cal)
 
 
@@ -178,7 +181,7 @@ def find_matching_event(event_name: str, old_dates: list = None,
     regardless of calendar size.
 
     A 0.15 score bonus is applied when the candidate entry's date is also
-    found in old_dates Ã¢â‚¬â€ acts as a strong disambiguation signal for finding
+    found in old_dates — acts as a strong disambiguation signal for finding
     the best title, but ALL entries sharing that best title are returned so
     that multi-day reschedules and cancellations remove every day, not only
     the first one.
@@ -199,11 +202,11 @@ def find_matching_event(event_name: str, old_dates: list = None,
 
     if best_score >= threshold:
         matched = [e for e in cal if e["title"] == best_title]
-        print(f"  Similarity score: {best_score:.2f} Ã¢â‚¬â€ matched '{best_title}' "
+        print(f"  Similarity score: {best_score:.2f} — matched '{best_title}' "
               f"({len(matched)} entr{'y' if len(matched) == 1 else 'ies'})")
         return matched
 
-    print(f"  Similarity score: {best_score:.2f} Ã¢â‚¬â€ no confident match found")
+    print(f"  Similarity score: {best_score:.2f} — no confident match found")
     return []
 
 # =========================================================
@@ -240,7 +243,7 @@ def normalize_dashes(text: str) -> str:
 
 def is_likely_date(text: str) -> bool:
     """
-    Guard against dateutil parsing non-date strings (e.g. 'GPT-2' Ã¢â€ â€™ June 2).
+    Guard against dateutil parsing non-date strings (e.g. 'GPT-2' → June 2).
     Only passes text containing a month abbreviation or a numeric separator.
     Bug fix: removed the unreachable duplicate 'return False' from the original.
     """
@@ -312,7 +315,7 @@ def _expand_date_ranges(text: str) -> list[str]:
                         (s_dt + datetime.timedelta(days=i)).strftime("%Y-%m-%d")
                         for i in range(delta + 1)
                     ]
-                    print(f"  [RANGE] Expanded '{s_str}' Ã¢â€ â€™ '{e_str}' into {delta + 1} day(s)")
+                    print(f"  [RANGE] Expanded '{s_str}' → '{e_str}' into {delta + 1} day(s)")
             except Exception:
                 pass
     return out
@@ -427,12 +430,12 @@ def analyze_email(body: str, subject: str) -> dict:
                     continue
                 try:
                     date_str = dateutil.parser.parse(val, fuzzy=True).strftime("%Y-%m-%d")
-                    # Check only the sentence containing this date for deadline context Ã¢â‚¬â€
+                    # Check only the sentence containing this date for deadline context —
                     # prevents cross-sentence bleed where a deadline phrase in sentence A
                     # wrongly flags a legitimate event date in sentence B.
                     ctx = next((s.lower() for s in text_sentences if val.lower() in s.lower()), "")
                     if any(kw in ctx for kw in DEADLINE_KEYWORDS):
-                        print(f"  [SKIP]  '{val}' looks like a deadline Ã¢â‚¬â€ not an event date")
+                        print(f"  [SKIP]  '{val}' looks like a deadline — not an event date")
                     else:
                         extracted_dates.append(date_str)
                 except Exception:
@@ -461,7 +464,7 @@ def analyze_email(body: str, subject: str) -> dict:
                     # Only store a venue entity that appears AFTER the keyword
                     entity_start = ent.get("start", text.find(val))
                     if rsplit and entity_start < rsplit.start():
-                        continue  # old-venue mention Ã¢â‚¬â€ skip
+                        continue  # old-venue mention — skip
                 if not result["venue"] or etype == "reschedule":
                     # Extend forward from GLiNER entity, crossing newlines
                     m = re.search(re.escape(val) + r"(?:,\s*[^.]+)*", text)
@@ -513,8 +516,7 @@ def analyze_email(body: str, subject: str) -> dict:
                 pre_text  = text[:split_m.start()]
                 post_text = text[split_m.end():]
                 # Extract point-dates from each half
-                pre_dates  = [d for d in extracted_dates
-                               if any(d in pre_text for d in [d])]
+                pre_dates  = [d for d in extracted_dates if d in pre_text]
                 post_dates = [d for d in extracted_dates
                                if d not in pre_dates]
                 # Expand date ranges independently from each half
@@ -533,7 +535,7 @@ def analyze_email(body: str, subject: str) -> dict:
                     else:
                         result["dates"] = all_dates
             else:
-                # No reschedule keyword found in text Ã¢â‚¬â€ use original heuristic
+                # No reschedule keyword found in text — use original heuristic
                 if len(all_dates) >= 2:
                     result["old_dates"] = [all_dates[0]]
                     result["dates"]     = all_dates[1:]
@@ -586,11 +588,11 @@ def process_email(sender: str, receiver: str, subject: str, body: str) -> None:
     print(json.dumps(result, indent=4), "\n")
 
     # ==================================================
-    # HANDLE: NEW EVENT Ã¢â€ â€™ add entries to calendar.json
+    # HANDLE: NEW EVENT → add entries to calendar.json
     # ==================================================
     if etype == "event":
         if not result["dates"]:
-            print("  WARNING: No dates extracted Ã¢â‚¬â€ skipping calendar entry.")
+            print("  WARNING: No dates extracted — skipping calendar entry.")
         else:
             print("CALENDAR ACTIONS:")
             for date in result["dates"]:
@@ -605,14 +607,14 @@ def process_email(sender: str, receiver: str, subject: str, body: str) -> None:
                 })
 
     # ==================================================
-    # HANDLE: RESCHEDULE Ã¢â€ â€™ update entries in calendar.json
+    # HANDLE: RESCHEDULE → update entries in calendar.json
     # ==================================================
     elif etype == "reschedule":
-        print("RESCHEDULE DETECTED Ã¢â‚¬â€ searching calendar for matching event...")
+        print("RESCHEDULE DETECTED — searching calendar for matching event...")
         matches = find_matching_event(result["event"], result["old_dates"])
         print("\nCALENDAR ACTIONS:")
         if matches:
-            print(f"  Matched: '{matches[0]['title']}' Ã¢â‚¬â€ {len(matches)} entr{'y' if len(matches)==1 else 'ies'}")
+            print(f"  Matched: '{matches[0]['title']}' — {len(matches)} entr{'y' if len(matches)==1 else 'ies'}")
             update_event(
                 old_entries=matches,
                 new_dates=result["dates"],
@@ -622,7 +624,7 @@ def process_email(sender: str, receiver: str, subject: str, body: str) -> None:
                 link=result.get("link"),
             )
         else:
-            print("  No existing event matched Ã¢â‚¬â€ adding as new entry (flagged)")
+            print("  No existing event matched — adding as new entry (flagged)")
             for date in result["dates"]:
                 add_event({
                     "title":     f"[POSSIBLY RESCHEDULED] {result['event']}",
@@ -641,14 +643,14 @@ def process_email(sender: str, receiver: str, subject: str, body: str) -> None:
         )
 
     # ==================================================
-    # HANDLE: CANCELLATION Ã¢â€ â€™ delete entries from calendar.json
+    # HANDLE: CANCELLATION → delete entries from calendar.json
     # ==================================================
     elif etype == "cancellation":
-        print("CANCELLATION DETECTED Ã¢â‚¬â€ searching calendar for matching event...")
+        print("CANCELLATION DETECTED — searching calendar for matching event...")
         matches = find_matching_event(result["event"], result["old_dates"])
         print("\nCALENDAR ACTIONS:")
         if matches:
-            print(f"  Matched: '{matches[0]['title']}' Ã¢â‚¬â€ deleting {len(matches)} entr{'y' if len(matches)==1 else 'ies'}.")
+            print(f"  Matched: '{matches[0]['title']}' — deleting {len(matches)} entr{'y' if len(matches)==1 else 'ies'}.")
             delete_event(matches)
         else:
             print("  No existing event matched for cancellation.")
@@ -660,10 +662,10 @@ def process_email(sender: str, receiver: str, subject: str, body: str) -> None:
         )
 
     # ==================================================
-    # HANDLE: ANNOUNCEMENT Ã¢â€ â€™ save to announcements.json only
+    # HANDLE: ANNOUNCEMENT → save to announcements.json only
     # ==================================================
     elif etype == "announcement":
-        print("ANNOUNCEMENT Ã¢â‚¬â€ not added to calendar.")
+        print("ANNOUNCEMENT — not added to calendar.")
         print(f"Summary  : {result.get('description')}\n")
         print("ANNOUNCEMENT ACTIONS:")
         save_announcement(
@@ -673,7 +675,7 @@ def process_email(sender: str, receiver: str, subject: str, body: str) -> None:
         )
 
     else:
-        print("UNKNOWN TYPE Ã¢â‚¬â€ could not process this email.")
+        print("UNKNOWN TYPE — could not process this email.")
 
     print(f"\n{'=' * 50}\n")
 
@@ -688,53 +690,73 @@ def process_email(sender: str, receiver: str, subject: str, body: str) -> None:
 # =========================================================
 
 if __name__ == "__main__":
+    # Fail fast if credentials are missing rather than getting a cryptic IMAP error.
+    if not EMAIL_ADDRESS or not EMAIL_PASSWORD:
+        raise SystemExit(
+            "ERROR: EMAIL_ADDRESS or EMAIL_PASSWORD not set in environment / .env file."
+        )
+
     mail = imaplib.IMAP4_SSL(IMAP_SERVER)
-    mail.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
-    mail.select("inbox")
+    try:
+        mail.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+        mail.select("inbox")
 
-    status, messages = mail.search(None, "UNSEEN")
-    email_ids = messages[0].split()
+        status, messages = mail.search(None, "UNSEEN")
+        if status != "OK":
+            raise RuntimeError(f"IMAP search failed with status: {status!r}")
+        email_ids = messages[0].split()
 
-    if not email_ids:
-        print("No unread emails found.")
-    else:
-        print(f"Found {len(email_ids)} unread email(s).\n")
+        if not email_ids:
+            print("No unread emails found.")
+        else:
+            print(f"Found {len(email_ids)} unread email(s).\n")
 
-    for latest_email_id in email_ids:
-        status, msg_data = mail.fetch(latest_email_id, "(RFC822)")
-        for response_part in msg_data:
-            if not isinstance(response_part, tuple):
+        for latest_email_id in email_ids:
+            status, msg_data = mail.fetch(latest_email_id, "(RFC822)")
+            if status != "OK" or not msg_data:
+                print(f"WARNING: Failed to fetch email ID {latest_email_id} — skipping.")
                 continue
-            msg = email.message_from_bytes(response_part[1])
 
-            raw_subject = msg["Subject"]
-            decoded_subject = decode_header(raw_subject)
-            subject = "".join(
-                part.decode(enc or "utf-8", errors="ignore") if isinstance(part, bytes) else part
-                for part, enc in decoded_subject
-            )
+            for response_part in msg_data:
+                if not isinstance(response_part, tuple):
+                    continue
+                msg = email.message_from_bytes(response_part[1])
 
-            email_body = ""
-            if msg.is_multipart():
-                for part in msg.walk():
-                    ct = part.get_content_type()
-                    payload = part.get_payload(decode=True)
-                    if not payload:
-                        continue
-                    text = payload.decode(errors="ignore")
-                    if ct == "text/plain":
-                        email_body = text
-                        break
-                    elif ct == "text/html" and not email_body:
-                        email_body = BeautifulSoup(text, "html.parser").get_text()
-            else:
-                payload = msg.get_payload(decode=True)
-                if payload:
-                    email_body = payload.decode(errors="ignore")
+                # msg.get() returns None for missing headers; default to empty string
+                # so decode_header() and process_email() never receive None.
+                raw_subject = msg.get("Subject") or ""
+                decoded_subject = decode_header(raw_subject)
+                subject = "".join(
+                    part.decode(enc or "utf-8", errors="ignore") if isinstance(part, bytes) else part
+                    for part, enc in decoded_subject
+                )
 
-            process_email(msg["From"], msg["To"], subject, email_body)
+                email_body = ""
+                if msg.is_multipart():
+                    for part in msg.walk():
+                        ct = part.get_content_type()
+                        payload = part.get_payload(decode=True)
+                        if not payload:
+                            continue
+                        text = payload.decode(errors="ignore")
+                        if ct == "text/plain":
+                            email_body = text
+                            break
+                        elif ct == "text/html" and not email_body:
+                            email_body = BeautifulSoup(text, "html.parser").get_text()
+                else:
+                    payload = msg.get_payload(decode=True)
+                    if payload:
+                        email_body = payload.decode(errors="ignore")
 
-    mail.logout()
+                sender   = msg.get("From") or ""
+                receiver = msg.get("To")   or ""
+                process_email(sender, receiver, subject, email_body)
+
+    finally:
+        # Always log out, even if an exception is raised during processing.
+        mail.logout()
+
     print("Done.")
     print(f"Events saved to        : {CALENDAR_FILE}")
     print(f"Announcements saved to : {ANNOUNCEMENTS_FILE}")
