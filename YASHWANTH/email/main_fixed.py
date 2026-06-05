@@ -1,4 +1,4 @@
-# =========================================================
+﻿# =========================================================
 # SECURE EVENT EXTRACTION MAIL READER  (refactored)
 # Uses GLiNER (urchade/gliner_small-v2.1) for entity extraction
 # and SentenceTransformer (all-MiniLM-L6-v2) for reschedule matching.
@@ -15,6 +15,10 @@ import dateutil.parser
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer, util
 from gliner import GLiNER
+
+import imaplib, email
+from email.header import decode_header
+from bs4 import BeautifulSoup
 
 load_dotenv()
 
@@ -50,7 +54,7 @@ VENUE_KEYWORDS = [
     "Complex", "Ground", "Arena", "Classroom",
 ]
 
-# Unicode dash variants — used in normalize_dashes() and time-splitting
+# Unicode dash variants Ã¢â‚¬â€ used in normalize_dashes() and time-splitting
 DASH_CHARS = r"[\u2013\u2014\u2015\u2212\ufe58\ufe63\uff0d]"
 
 # Pre-compiled regex patterns (were rebuilt on every call in the original)
@@ -85,11 +89,14 @@ print("Models ready.\n")
 # =========================================================
 
 def _load_json(path: str) -> list:
-    """Load a JSON list from disk; returns [] if the file doesn't exist."""
+    """Load a JSON list from disk; returns [] if the file doesn't exist or is empty."""
     if not os.path.exists(path):
         return []
     with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        content = f.read().strip()
+        if not content:          # file exists but is empty
+            return []
+        return json.loads(content)
 
 
 def _save_json(path: str, data: list) -> None:
@@ -142,7 +149,7 @@ def update_event(old_entries: list[dict], new_dates: list,
             "status":    "reschedule",
         })
         old_dates_str = ", ".join(e["date"] for e in old_entries)
-        print(f"  [UPDATED] '{title}' — [{old_dates_str}] → {date}")
+        print(f"  [UPDATED] '{title}' Ã¢â‚¬â€ [{old_dates_str}] Ã¢â€ â€™ {date}")
     _save_json(CALENDAR_FILE, cal)
 
 
@@ -170,7 +177,7 @@ def find_matching_event(event_name: str, old_dates: list = None,
     regardless of calendar size.
 
     A 0.15 score bonus is applied when the candidate entry's date is also
-    found in old_dates — acts as a strong disambiguation signal for finding
+    found in old_dates Ã¢â‚¬â€ acts as a strong disambiguation signal for finding
     the best title, but ALL entries sharing that best title are returned so
     that multi-day reschedules and cancellations remove every day, not only
     the first one.
@@ -191,11 +198,11 @@ def find_matching_event(event_name: str, old_dates: list = None,
 
     if best_score >= threshold:
         matched = [e for e in cal if e["title"] == best_title]
-        print(f"  Similarity score: {best_score:.2f} — matched '{best_title}' "
+        print(f"  Similarity score: {best_score:.2f} Ã¢â‚¬â€ matched '{best_title}' "
               f"({len(matched)} entr{'y' if len(matched) == 1 else 'ies'})")
         return matched
 
-    print(f"  Similarity score: {best_score:.2f} — no confident match found")
+    print(f"  Similarity score: {best_score:.2f} Ã¢â‚¬â€ no confident match found")
     return []
 
 # =========================================================
@@ -232,7 +239,7 @@ def normalize_dashes(text: str) -> str:
 
 def is_likely_date(text: str) -> bool:
     """
-    Guard against dateutil parsing non-date strings (e.g. 'GPT-2' → June 2).
+    Guard against dateutil parsing non-date strings (e.g. 'GPT-2' Ã¢â€ â€™ June 2).
     Only passes text containing a month abbreviation or a numeric separator.
     Bug fix: removed the unreachable duplicate 'return False' from the original.
     """
@@ -304,7 +311,7 @@ def _expand_date_ranges(text: str) -> list[str]:
                         (s_dt + datetime.timedelta(days=i)).strftime("%Y-%m-%d")
                         for i in range(delta + 1)
                     ]
-                    print(f"  [RANGE] Expanded '{s_str}' → '{e_str}' into {delta + 1} day(s)")
+                    print(f"  [RANGE] Expanded '{s_str}' Ã¢â€ â€™ '{e_str}' into {delta + 1} day(s)")
             except Exception:
                 pass
     return out
@@ -318,7 +325,11 @@ def _venue_fallback(text: str) -> str | None:
     """
     m = re.search(r"Venue\s*:\s*(.*?)(?:\n|$)", text, re.IGNORECASE)
     if m:
-        return m.group(1).strip()
+        # Venue label may span multiple comma-separated lines
+        venue_start = m.group(1).strip()
+        full_m = re.search(re.escape(venue_start) + r"(?:,\s*[^.]+)*", text)
+        raw = full_m.group(0) if full_m else venue_start
+        return re.sub(r"\s*\n\s*", " ", raw).strip().rstrip(".")
     for sentence in re.split(r"[.!?\n]+", text):
         sentence = sentence.strip()
         if any(w.lower() in sentence.lower() for w in VENUE_KEYWORDS):
@@ -415,12 +426,12 @@ def analyze_email(body: str, subject: str) -> dict:
                     continue
                 try:
                     date_str = dateutil.parser.parse(val, fuzzy=True).strftime("%Y-%m-%d")
-                    # Check only the sentence containing this date for deadline context —
+                    # Check only the sentence containing this date for deadline context Ã¢â‚¬â€
                     # prevents cross-sentence bleed where a deadline phrase in sentence A
                     # wrongly flags a legitimate event date in sentence B.
                     ctx = next((s.lower() for s in text_sentences if val.lower() in s.lower()), "")
                     if any(kw in ctx for kw in DEADLINE_KEYWORDS):
-                        print(f"  [SKIP]  '{val}' looks like a deadline — not an event date")
+                        print(f"  [SKIP]  '{val}' looks like a deadline Ã¢â‚¬â€ not an event date")
                     else:
                         extracted_dates.append(date_str)
                 except Exception:
@@ -433,6 +444,11 @@ def analyze_email(body: str, subject: str) -> dict:
                 result["from_time"], result["to_time"] = _split_time(val)
 
             elif lbl == "venue":
+                # If reschedule explicitly says "same venue", we skip extraction
+                # so it falls back to the old venue in update_event.
+                if etype == "reschedule" and re.search(r"same\s+venue", text, re.IGNORECASE):
+                    continue
+
                 # For reschedule emails, we only want the NEW venue (after the
                 # reschedule keyword).  For all other types, first-found wins.
                 if etype == "reschedule":
@@ -444,14 +460,20 @@ def analyze_email(body: str, subject: str) -> dict:
                     # Only store a venue entity that appears AFTER the keyword
                     entity_start = ent.get("start", text.find(val))
                     if rsplit and entity_start < rsplit.start():
-                        continue  # old-venue mention — skip
+                        continue  # old-venue mention Ã¢â‚¬â€ skip
                 if not result["venue"] or etype == "reschedule":
-                    # Grab the full address string (comma-separated continuation)
-                    # Use [ \t]* (not \s*) to avoid swallowing newlines into venue
-                    m = re.search(re.escape(val) + r"(?:,[ \t]*[^.\n]+)*", text)
+                    # Extend forward from GLiNER entity, crossing newlines
+                    m = re.search(re.escape(val) + r"(?:,\s*[^.]+)*", text)
                     raw_venue = m.group(0).strip() if m else val
-                    # Normalize any remaining whitespace / embedded newlines
-                    result["venue"] = re.sub(r"\s*\n\s*", " ", raw_venue).strip()
+                    # Collapse embedded newlines and trim
+                    result["venue"] = re.sub(r"\s*\n\s*", " ", raw_venue).strip().rstrip(".")
+
+        # --- Venue fallback (regex) ---
+        if not result["venue"]:
+            if etype == "reschedule" and re.search(r"same\s+venue", text, re.IGNORECASE):
+                pass  # leave as None to inherit old venue
+            else:
+                result["venue"] = _venue_fallback(text)
 
         # --- Time fallback (regex) ---
         if not result["from_time"]:
@@ -467,10 +489,6 @@ def analyze_email(body: str, subject: str) -> dict:
             elif single_t:
                 result["from_time"] = single_t.group()
                 result["time"]      = result["from_time"]
-
-        # --- Venue fallback (regex) ---
-        if not result["venue"]:
-            result["venue"] = _venue_fallback(text)
 
         # --- Deduplicate (GLiNER point-dates merged with range-expanded dates) ---
         all_dates = _dedupe(extracted_dates + _expand_date_ranges(text))
@@ -514,7 +532,7 @@ def analyze_email(body: str, subject: str) -> dict:
                     else:
                         result["dates"] = all_dates
             else:
-                # No reschedule keyword found in text — use original heuristic
+                # No reschedule keyword found in text Ã¢â‚¬â€ use original heuristic
                 if len(all_dates) >= 2:
                     result["old_dates"] = [all_dates[0]]
                     result["dates"]     = all_dates[1:]
@@ -567,11 +585,11 @@ def process_email(sender: str, receiver: str, subject: str, body: str) -> None:
     print(json.dumps(result, indent=4), "\n")
 
     # ==================================================
-    # HANDLE: NEW EVENT → add entries to calendar.json
+    # HANDLE: NEW EVENT Ã¢â€ â€™ add entries to calendar.json
     # ==================================================
     if etype == "event":
         if not result["dates"]:
-            print("  WARNING: No dates extracted — skipping calendar entry.")
+            print("  WARNING: No dates extracted Ã¢â‚¬â€ skipping calendar entry.")
         else:
             print("CALENDAR ACTIONS:")
             for date in result["dates"]:
@@ -586,14 +604,14 @@ def process_email(sender: str, receiver: str, subject: str, body: str) -> None:
                 })
 
     # ==================================================
-    # HANDLE: RESCHEDULE → update entries in calendar.json
+    # HANDLE: RESCHEDULE Ã¢â€ â€™ update entries in calendar.json
     # ==================================================
     elif etype == "reschedule":
-        print("RESCHEDULE DETECTED — searching calendar for matching event...")
+        print("RESCHEDULE DETECTED Ã¢â‚¬â€ searching calendar for matching event...")
         matches = find_matching_event(result["event"], result["old_dates"])
         print("\nCALENDAR ACTIONS:")
         if matches:
-            print(f"  Matched: '{matches[0]['title']}' — {len(matches)} entr{'y' if len(matches)==1 else 'ies'}")
+            print(f"  Matched: '{matches[0]['title']}' Ã¢â‚¬â€ {len(matches)} entr{'y' if len(matches)==1 else 'ies'}")
             update_event(
                 old_entries=matches,
                 new_dates=result["dates"],
@@ -603,7 +621,7 @@ def process_email(sender: str, receiver: str, subject: str, body: str) -> None:
                 link=result.get("link"),
             )
         else:
-            print("  No existing event matched — adding as new entry (flagged)")
+            print("  No existing event matched Ã¢â‚¬â€ adding as new entry (flagged)")
             for date in result["dates"]:
                 add_event({
                     "title":     f"[POSSIBLY RESCHEDULED] {result['event']}",
@@ -622,14 +640,14 @@ def process_email(sender: str, receiver: str, subject: str, body: str) -> None:
         )
 
     # ==================================================
-    # HANDLE: CANCELLATION → delete entries from calendar.json
+    # HANDLE: CANCELLATION Ã¢â€ â€™ delete entries from calendar.json
     # ==================================================
     elif etype == "cancellation":
-        print("CANCELLATION DETECTED — searching calendar for matching event...")
+        print("CANCELLATION DETECTED Ã¢â‚¬â€ searching calendar for matching event...")
         matches = find_matching_event(result["event"], result["old_dates"])
         print("\nCALENDAR ACTIONS:")
         if matches:
-            print(f"  Matched: '{matches[0]['title']}' — deleting {len(matches)} entr{'y' if len(matches)==1 else 'ies'}.")
+            print(f"  Matched: '{matches[0]['title']}' Ã¢â‚¬â€ deleting {len(matches)} entr{'y' if len(matches)==1 else 'ies'}.")
             delete_event(matches)
         else:
             print("  No existing event matched for cancellation.")
@@ -641,10 +659,10 @@ def process_email(sender: str, receiver: str, subject: str, body: str) -> None:
         )
 
     # ==================================================
-    # HANDLE: ANNOUNCEMENT → save to announcements.json only
+    # HANDLE: ANNOUNCEMENT Ã¢â€ â€™ save to announcements.json only
     # ==================================================
     elif etype == "announcement":
-        print("ANNOUNCEMENT — not added to calendar.")
+        print("ANNOUNCEMENT Ã¢â‚¬â€ not added to calendar.")
         print(f"Summary  : {result.get('description')}\n")
         print("ANNOUNCEMENT ACTIONS:")
         save_announcement(
@@ -654,265 +672,68 @@ def process_email(sender: str, receiver: str, subject: str, body: str) -> None:
         )
 
     else:
-        print("UNKNOWN TYPE — could not process this email.")
+        print("UNKNOWN TYPE Ã¢â‚¬â€ could not process this email.")
 
     print(f"\n{'=' * 50}\n")
 
-# =========================================================
-# IMAP INTEGRATION  [commented out — prototype mode]
-# =========================================================
-# Uncomment when transitioning out of prototype mode:
-#
-# import imaplib, email
-# from email.header import decode_header
-# from bs4 import BeautifulSoup
-#
-# mail = imaplib.IMAP4_SSL(IMAP_SERVER)
-# mail.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
-# mail.select("inbox")
-# status, messages = mail.search(None, "UNSEEN")
-# for latest_email_id in messages[0].split():
-#     status, msg_data = mail.fetch(latest_email_id, "(RFC822)")
-#     for response_part in msg_data:
-#         if not isinstance(response_part, tuple):
-#             continue
-#         msg = email.message_from_bytes(response_part[1])
-#         raw_subject = msg["Subject"]
-#         decoded_subject = decode_header(raw_subject)
-#         subject = "".join(
-#             part.decode(enc or "utf-8", errors="ignore") if isinstance(part, bytes) else part
-#             for part, enc in decoded_subject
-#         )
-#         email_body = ""
-#         if msg.is_multipart():
-#             for part in msg.walk():
-#                 ct = part.get_content_type()
-#                 payload = part.get_payload(decode=True)
-#                 if not payload:
-#                     continue
-#                 text = payload.decode(errors="ignore")
-#                 if ct == "text/plain":
-#                     email_body = text; break
-#                 elif ct == "text/html" and not email_body:
-#                     email_body = BeautifulSoup(text, "html.parser").get_text()
-#         else:
-#             payload = msg.get_payload(decode=True)
-#             if payload:
-#                 email_body = payload.decode(errors="ignore")
-#         process_email(msg["From"], msg["To"], subject, email_body)
-# mail.logout()
+
 
 # =========================================================
-# TEST EMAIL SUITE
-# Each tuple: (sender, receiver, subject, body)
-# Run in order — emails 3, 8, and 12 depend on prior entries.
+# IMAP INTEGRATION
 # =========================================================
-
-TEST_EMAILS = [
-    # ── 1: Single Day Event ──────────────────────────────
-    (
-        "hod@gmail.com", "receiver@gmail.com",
-        "Seminar on Artificial Intelligence and Future Technologies",
-        """Dear All,
-Greetings!!!
-You are cordially invited to attend the Seminar on Artificial Intelligence and Future
-Technologies organized by the Department of Computer Science and Engineering, SRMIST.
-The seminar will be held on 14 June 2026 at 10:00 AM at the Seminar Hall, CSE Block A,
-SRMIST, Kattankulathur.
-All faculty members and students are requested to attend and make use of this opportunity.
-Thanks and Regards,
-Dr. A. Ramesh
-Head of Department
-Department of Computer Science and Engineering
-SRMIST, Kattankulathur""",
-    ),
-
-    # ── 2: Multi-Day Event ───────────────────────────────
-    (
-        "dean@gmail.com", "receiver@gmail.com",
-        "National Level Technical Symposium - Technovanza 2026",
-        """Dear All,
-Greetings!!!
-We are pleased to invite you to Technovanza 2026, the National Level Technical Symposium
-organized by SRMIST.
-The symposium will be conducted from July 10 to July 12, 2026 starting at 09:00 AM each
-day at the Main Auditorium, SRMIST, Kattankulathur.
-The event will feature paper presentations, hackathons, project expos, and guest lectures.
-All departments are requested to encourage maximum student participation.
-Thanks and Regards,
-Dr. P. Venkatesh
-Dean, Faculty of Engineering and Technology
-SRMIST, Kattankulathur""",
-    ),
-
-    # ── 3: Rescheduled Event (requires Email 1 in calendar) ──
-    (
-        "hod@gmail.com", "receiver@gmail.com",
-        "Rescheduled - Seminar on Artificial Intelligence and Future Technologies",
-        """Dear All,
-Greetings!!!
-This is to inform you that the Seminar on Artificial Intelligence and Future Technologies
-which was originally scheduled on 14 June 2026 has been rescheduled due to unavoidable
-circumstances.
-The seminar will now be held on 20 June 2026 at 10:00 AM at the same venue, Seminar Hall,
-CSE Block A, SRMIST, Kattankulathur.
-We regret the inconvenience caused and request all to update your calendars accordingly.
-Thanks and Regards,
-Dr. A. Ramesh
-Head of Department
-Department of Computer Science and Engineering
-SRMIST, Kattankulathur""",
-    ),
-
-    # ── 4: Announcement (No Event) ───────────────────────
-    (
-        "dean@gmail.com", "receiver@gmail.com",
-        "Holiday Notice - Institution Closed on June 17, 2026",
-        """Dear All,
-This is to inform all faculty, staff, and students that the institution will remain
-closed on June 17, 2026 on account of a public holiday.
-All scheduled activities, classes, and lab sessions for that day stand cancelled.
-Please plan accordingly.
-For any urgent matters, kindly contact your respective department offices.
-Thanks and Regards,
-Administrative Office
-SRMIST, Kattankulathur""",
-    ),
-
-    # ── 5: Two Dates (Deadline + Event Date) ─────────────
-    (
-        "lekhalokare.28@gmail.com", "receiver@gmail.com",
-        "Workshop on Cyber Security and Ethical Hacking",
-        """Dear All,
-Greetings!!!
-The Department of Information Technology is organizing a Workshop on Cyber Security and
-Ethical Hacking for final year students.
-Registration Deadline: June 5, 2026 — Interested students must register before this date
-via the department office.
-The workshop will be conducted on June 18, 2026 at 09:30 AM at the IT Seminar Hall,
-IT Block, SRMIST, Kattankulathur.
-Seats are limited. Early registration is encouraged.
-Thanks and Regards,
-Dr. S. Kavitha
-Department of Information Technology
-SRMIST, Kattankulathur""",
-    ),
-
-    # ── 6: Unauthorized Sender (should be skipped entirely) ──
-    (
-        "randomstudent@gmail.com", "receiver@gmail.com",
-        "Party at Hostel Block C",
-        """Hey everyone,
-There is a party happening at Hostel Block C on June 20, 2026 at 08:00 PM.
-Everyone is welcome. Bring snacks!
-Cheers""",
-    ),
-
-    # ── 7: Event with No Venue Mentioned ─────────────────
-    (
-        "hod@gmail.com", "receiver@gmail.com",
-        "Guest Lecture on Quantum Computing",
-        """Dear All,
-Greetings!!!
-You are cordially invited to attend a Guest Lecture on Quantum Computing by Dr. Rajesh
-Sharma, Senior Scientist, ISRO.
-The lecture will be held on July 5, 2026 at 02:00 PM.
-All faculty and students of the Department of Physics and Computer Science are requested
-to attend.
-Thanks and Regards,
-Dr. M. Krishnan
-Department of Physics
-SRMIST, Kattankulathur""",
-    ),
-
-    # ── 8: Cancellation (requires Email 5 in calendar) ───
-    (
-        "dean@gmail.com", "receiver@gmail.com",
-        "Cancellation - Workshop on Cyber Security and Ethical Hacking",
-        """Dear All,
-Greetings!!!
-We regret to inform you that the Workshop on Cyber Security and Ethical Hacking scheduled
-on June 18, 2026 has been cancelled due to unavoidable circumstances.
-We apologize for the inconvenience caused. A new date will be announced shortly.
-Thanks and Regards,
-Dr. P. Venkatesh
-Dean, Faculty of Engineering and Technology
-SRMIST, Kattankulathur""",
-    ),
-
-    # ── 9: Three-Day Event ───────────────────────────────
-    (
-        "dean@gmail.com", "receiver@gmail.com",
-        "Annual Sports Meet - Sportanza 2026",
-        """Dear All,
-Greetings!!!
-We are excited to announce the Annual Sports Meet - Sportanza 2026 organized by the Sports
-and Physical Education Department, SRMIST.
-The event will be conducted from August 3 to August 5, 2026 starting at 08:00 AM each day
-at the University Sports Complex, SRMIST, Kattankulathur.
-Events include athletics, basketball, volleyball, cricket, badminton, and chess.
-All students and faculty are encouraged to participate and support their departments.
-Thanks and Regards,
-Dr. R. Subramaniam
-Director, Sports and Physical Education
-SRMIST, Kattankulathur""",
-    ),
-
-    # ── 10: Announcement with a Date (not an event) ──────
-    (
-        "hod@gmail.com", "receiver@gmail.com",
-        "Internal Assessment Marks Submission Deadline",
-        """Dear Faculty,
-This is to inform all faculty members that the Internal Assessment marks for the odd
-semester 2026 must be submitted to the examination cell on or before July 10, 2026.
-Faculty who fail to submit marks before the deadline will have their marks locked by
-the system automatically.
-Kindly ensure timely submission to avoid any inconvenience.
-Thanks and Regards,
-Dr. A. Ramesh
-Head of Department
-Department of Computer Science and Engineering
-SRMIST, Kattankulathur""",
-    ),
-
-    # ── 11: Vague Email — "tomorrow" resolves to today + 1 day ──
-    (
-        "lekhalokare.28@gmail.com", "receiver@gmail.com",
-        "Meeting Tomorrow",
-        """Dear All,
-There will be a departmental meeting tomorrow at 11:00 AM at the Conference Room,
-Admin Block.
-Attendance is mandatory for all faculty members.
-Regards,
-Dr. S. Kavitha""",
-    ),
-
-    # ── 12: Reschedule + Venue Change (requires Email 9) ─
-    (
-        "dean@gmail.com", "receiver@gmail.com",
-        "Rescheduled and Venue Changed - Annual Sports Meet Sportanza 2026",
-        """Dear All,
-Greetings!!!
-Please note that the Annual Sports Meet - Sportanza 2026 originally scheduled from
-August 3 to August 5, 2026 at the University Sports Complex has been rescheduled.
-The event will now be held from August 10 to August 12, 2026 at 08:00 AM at the
-SRMIST Cricket Ground and Open Arena, Kattankulathur.
-We apologize for the inconvenience and request everyone to update their schedules.
-Thanks and Regards,
-Dr. R. Subramaniam
-Director, Sports and Physical Education
-SRMIST, Kattankulathur""",
-    ),
-]
 
 # =========================================================
 # MAIN
 # =========================================================
 
 if __name__ == "__main__":
-    for sender, receiver, subject, body in TEST_EMAILS:
-        process_email(sender, receiver, subject, body)
+    mail = imaplib.IMAP4_SSL(IMAP_SERVER)
+    mail.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+    mail.select("inbox")
 
-    print("Prototype run complete.")
+    status, messages = mail.search(None, "UNSEEN")
+    email_ids = messages[0].split()
+
+    if not email_ids:
+        print("No unread emails found.")
+    else:
+        print(f"Found {len(email_ids)} unread email(s).\n")
+
+    for latest_email_id in email_ids:
+        status, msg_data = mail.fetch(latest_email_id, "(RFC822)")
+        for response_part in msg_data:
+            if not isinstance(response_part, tuple):
+                continue
+            msg = email.message_from_bytes(response_part[1])
+
+            raw_subject = msg["Subject"]
+            decoded_subject = decode_header(raw_subject)
+            subject = "".join(
+                part.decode(enc or "utf-8", errors="ignore") if isinstance(part, bytes) else part
+                for part, enc in decoded_subject
+            )
+
+            email_body = ""
+            if msg.is_multipart():
+                for part in msg.walk():
+                    ct = part.get_content_type()
+                    payload = part.get_payload(decode=True)
+                    if not payload:
+                        continue
+                    text = payload.decode(errors="ignore")
+                    if ct == "text/plain":
+                        email_body = text
+                        break
+                    elif ct == "text/html" and not email_body:
+                        email_body = BeautifulSoup(text, "html.parser").get_text()
+            else:
+                payload = msg.get_payload(decode=True)
+                if payload:
+                    email_body = payload.decode(errors="ignore")
+
+            process_email(msg["From"], msg["To"], subject, email_body)
+
+    mail.logout()
+    print("Done.")
     print(f"Events saved to        : {CALENDAR_FILE}")
     print(f"Announcements saved to : {ANNOUNCEMENTS_FILE}")
