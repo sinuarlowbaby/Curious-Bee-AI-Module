@@ -17,7 +17,7 @@ from email.header import decode_header
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from sentence_transformers import SentenceTransformer, util
-from langchain_ollama import ChatOllama
+# from langchain_ollama import ChatOllama
 # from groq import Groq
 
 #google calendar 
@@ -135,6 +135,9 @@ def find_matching_event(event_name, old_dates=None, threshold=0.75):
 
 def add_event(entry):
     """Add a new event entry to the calendar."""
+    # Clean title before saving
+    entry["title"] = re.sub(r'[\r\n\t]+', ' ', entry["title"]).strip()
+    entry["title"] = re.sub(r'\s+', ' ', entry["title"])
     calendar = load_calendar()
     calendar.append(entry)
     save_calendar(calendar)
@@ -390,6 +393,8 @@ def analyze_email(body, subject):
             elif label == "time" and not result["time"]:
                 if not is_likely_time(val):
                     continue
+                val = re.sub(r'[\r\n\t]+', ' ', val).strip()
+                val = re.sub(r'\s+', ' ', val)
                 result["time"] = val
                 # Attempt to split time into from_time and to_time
                 val_clean = re.sub(r'(?i)\s+onwards', '', val).strip()
@@ -479,9 +484,11 @@ def analyze_email(body, subject):
         # Merge GLiNER point-dates with range-expanded dates
         all_dates = extracted_dates + range_dates
 
-        # Remove duplicates while maintaining order
+        # Remove duplicates and sort chronologically
         seen = set()
-        unique_dates = [x for x in all_dates if not (x in seen or seen.add(x))]
+        unique_dates = sorted(
+            [x for x in all_dates if not (x in seen or seen.add(x))]
+        )
 
         if email_type == "cancellation":
             result["old_dates"] = unique_dates
@@ -542,10 +549,14 @@ def analyze_email(body, subject):
 
 def get_calendar_service():
     creds = None
+    # Get the directory where the script is located
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    token_path = os.path.join(base_dir, 'token.pickle')
+    creds_path = os.path.join(base_dir, 'credentials.json')
 
     # token.pickle stores user access token
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
+    if os.path.exists(token_path):
+        with open(token_path, 'rb') as token:
             creds = pickle.load(token)
 
     # If no valid creds, login
@@ -553,12 +564,24 @@ def get_calendar_service():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES
-            )
+            # Robust search for credentials.json:
+            # 1. Check folder where script is (LEKHA/event)
+            # 2. Check project root (2 levels up)
+            # 3. Check current working directory
+            search_locations = [
+                creds_path,
+                os.path.abspath(os.path.join(base_dir, "..", "..", "credentials.json")),
+                os.path.join(os.getcwd(), "credentials.json")
+            ]
+            
+            found_path = next((p for p in search_locations if os.path.exists(p)), None)
+            if not found_path:
+                raise FileNotFoundError(f"Could not find 'credentials.json' in any of: {search_locations}")
+
+            flow = InstalledAppFlow.from_client_secrets_file(found_path, SCOPES)
             creds = flow.run_local_server(port=0)
 
-        with open('token.pickle', 'wb') as token:
+        with open(token_path, 'wb') as token:
             pickle.dump(creds, token)
 
     return build('calendar', 'v3', credentials=creds)
@@ -567,12 +590,37 @@ def get_calendar_service():
 def add_event_to_calendar(event_data):
     service = get_calendar_service()
 
-    # FIX: build full datetime safely
-    start_dt = dateutil.parser.parse(
-        f"{event_data['date']} {event_data.get('time', '09:00 AM')}"
-    )
+    raw_from = event_data.get('from_time') or '09:00 AM'
+    normalized_from = re.sub(r"(\d{1,2})\.(\d{2})", r"\1:\2", str(raw_from))
+    start_dt = dateutil.parser.parse(f"{event_data['date']} {normalized_from}")
 
-    end_dt = start_dt + datetime.timedelta(hours=1)
+    raw_to = event_data.get('to_time')
+    if raw_to:
+        normalized_to = re.sub(r"(\d{1,2})\.(\d{2})", r"\1:\2", str(raw_to))
+        end_dt = dateutil.parser.parse(f"{event_data['date']} {normalized_to}")
+        if end_dt <= start_dt:
+            end_dt += datetime.timedelta(days=1)
+    else:
+        end_dt = start_dt + datetime.timedelta(hours=1)
+
+    # Search across a wide range to find ANY existing event with same title
+    search_time_min = (datetime.datetime.utcnow() - datetime.timedelta(days=365)).isoformat() + "Z"
+    search_time_max = (datetime.datetime.utcnow() + datetime.timedelta(days=365)).isoformat() + "Z"
+
+    existing_events = service.events().list(
+        calendarId='primary',
+        timeMin=search_time_min,
+        timeMax=search_time_max,
+        q=event_data['title'],
+        singleEvents=True
+    ).execute()
+
+    for existing in existing_events.get('items', []):
+        existing_summary = existing.get('summary', '').strip().lower()
+        existing_date = existing.get('start', {}).get('dateTime', '')[:10]
+        if existing_summary == clean_title.lower() and existing_date != event_data['date']:
+            service.events().delete(calendarId='primary', eventId=existing['id']).execute()
+            print(f"  [GOOGLE CALENDAR] Deleted existing event: '{existing['summary']}' on {existing_date}")
 
     event = {
         'summary': event_data['title'],
@@ -602,32 +650,32 @@ def add_event_to_calendar(event_data):
 # CONNECT TO MAILBOX  [COMMENTED OUT — PROTOTYPE MODE]
 # =========================================================
 
-# print("Connecting to mailbox...")
-# mail = imaplib.IMAP4_SSL(IMAP_SERVER)
-# mail.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
-# mail.select("inbox")
-# print("Connected.\n")
+print("Connecting to mailbox...")
+mail = imaplib.IMAP4_SSL(IMAP_SERVER)
+mail.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+mail.select("inbox")
+print("Connected.\n")
 
 # =========================================================
 # FETCH UNREAD EMAILS  [COMMENTED OUT — PROTOTYPE MODE]
 # =========================================================
 
-# try:
-#     status, messages = mail.search(None, "UNSEEN")
-#     email_ids = messages[0].split()
-# except imaplib.IMAP4.abort as e:
-#     print(f"\n[!] IMAP connection aborted by server: {e}")
-#     print("    This usually happens due to rate-limiting when running the script too frequently.")
-#     import sys
-#     sys.exit(1)
-# print(f"Found {len(email_ids)} unread email(s)\n")
-# print("=" * 50)
+try:
+    status, messages = mail.search(None, "UNSEEN")
+    email_ids = messages[0].split()
+except imaplib.IMAP4.abort as e:
+    print(f"\n[!] IMAP connection aborted by server: {e}")
+    print("    This usually happens due to rate-limiting when running the script too frequently.")
+    import sys
+    sys.exit(1)
+print(f"Found {len(email_ids)} unread email(s)\n")
+print("=" * 50)
 
-# =========================================================
-# READ EMAIL (FULL IMPLEMENTATION FROM SAMPLE.PY)
-# Uncomment this when transitioning out of prototype mode
-# =========================================================
-#
+# # =========================================================
+# # READ EMAIL (FULL IMPLEMENTATION FROM SAMPLE.PY)
+# # Uncomment this when transitioning out of prototype mode
+# # =========================================================
+
 # for latest_email_id in email_ids:
 #     status, msg_data = mail.fetch(latest_email_id, "(RFC822)")
 #     for response_part in msg_data:
@@ -642,7 +690,7 @@ def add_event_to_calendar(event_data):
 #                 else:
 #                     subject_parts.append(part)
 #             subject = "".join(subject_parts)
-#             
+            
 #             email_body = ""
 #             if msg.is_multipart():
 #                 for part in msg.walk():
@@ -658,11 +706,11 @@ def add_event_to_calendar(event_data):
 #                                 email_body = text
 #                     except:
 #                         pass
-#             else:
+#             else: 
 #                 payload = msg.get_payload(decode=True)
 #                 if payload:
 #                     email_body = payload.decode(errors="ignore")
-#
+
 #             # Then process email_body and subject with analyze_email(email_body, subject)
 
 # =========================================================
@@ -671,219 +719,320 @@ def add_event_to_calendar(event_data):
 # Change the three variables below to test a new email.
 # MAIL_SENDER must be one of the AUTHORIZED_SENDERS above.
 
-MAIL_SENDER   = "dean@gmail.com"          # who sent the email
-MAIL_RECEIVER = "receiver@gmail.com"      # who received it
-MAIL_SUBJECT  = """
-End Semester Examination Timetable – November 2026
-"""
-MAIL_BODY     = """
-Dear All,
-Greetings!!!
-This is to inform all students and faculty that the End Semester Examination Timetable for November 2026 has been
-released and is available on the SRMIST Student Portal.
-Examinations will commence from November 10, 2026.
-Students are advised to check their individual timetables on the portal at https://sp.srmist.edu.in and report any
-discrepancies to the Examination Cell before October 30, 2026.
-Hall tickets will be available for download from November 3, 2026.
-Thanks and Regards,
-Controller of Examinations
-SRMIST, Kattankulathur
-"""
+# MAIL_SENDER   = "dean@gmail.com"          # who sent the email
+# MAIL_RECEIVER = "receiver@gmail.com"      # who received it
+# MAIL_SUBJECT  = """
+# Workshop on Cyber Security and Ethical Hacking
+#  """
+# MAIL_BODY     = """
+# Dear All,
+
+# Greetings!!!
+
+# The Department of Information Technology is organizing a Workshop on Cyber Security and Ethical Hacking for final year students.
+
+# Registration Deadline: June 5, 2026 — Interested students must register before this date via the department office.
+
+# The workshop will be conducted on June 18, 2026 at 09:30 AM at the IT Seminar Hall, IT Block, SRMIST, Kattankulathur.
+
+# Seats are limited. Early registration is encouraged.
+
+# Thanks and Regards, Dr. S. Kavitha Department of Information Technology SRMIST, Kattankulathur
+
+
+# """
 
 # =========================================================
 # PROCESS EMAIL  (prototype — iterates over a single entry)
 # =========================================================
 
-for subject, sender, receiver, body in [
-    (MAIL_SUBJECT, MAIL_SENDER, MAIL_RECEIVER, MAIL_BODY)
-]:
+# =========================================================
+# PROCESS EMAIL
+# =========================================================
 
-    # --------------------------------------------------
-    # EXTRACT CLEAN SENDER EMAIL ADDRESS
-    # --------------------------------------------------
+for latest_email_id in email_ids:
+    status, msg_data = mail.fetch(latest_email_id, "(RFC822)")
+    for response_part in msg_data:
+        if isinstance(response_part, tuple):
+            msg = email.message_from_bytes(response_part[1])
 
-    sender_match = re.search(r"<(.+?)>", sender)
-    if sender_match:
-        sender_email = sender_match.group(1).strip().lower()
-    else:
-        sender_email = sender.strip().lower()
+            # Decode subject
+            raw_subject = msg["Subject"]
+            decoded_subject = decode_header(raw_subject)
+            subject_parts = []
+            for part, encoding in decoded_subject:
+                if isinstance(part, bytes):
+                    subject_parts.append(part.decode(encoding if encoding else "utf-8", errors="ignore"))
+                else:
+                    subject_parts.append(part)
+            subject = re.sub(r'[\r\n\t]+', ' ', "".join(subject_parts)).strip()
+            subject = re.sub(r'\s+', ' ', subject)
+            # Extract sender and receiver from email headers
+            sender   = msg["from"] or ""
+            receiver = msg["to"]   or ""
 
-    # --------------------------------------------------
-    # AUTHORIZED SENDER CHECK
-    # --------------------------------------------------
+            # Extract body
+            email_body = ""
+            if msg.is_multipart():
+                for part in msg.walk():
+                    content_type = part.get_content_type()
+                    try:
+                        payload = part.get_payload(decode=True)
+                        if payload:
+                            text = payload.decode(errors="ignore")
+                            if content_type == "text/plain":
+                                email_body = text
+                                break
+                            elif content_type == "text/html" and not email_body:
+                                email_body = text
+                    except:
+                        pass
+            else:
+                payload = msg.get_payload(decode=True)
+                if payload:
+                    email_body = payload.decode(errors="ignore")
 
-    if sender_email not in [s.strip().lower() for s in AUTHORIZED_SENDERS]:
-        print(f"UNAUTHORIZED SENDER SKIPPED: {sender_email}\n")
-        print("=" * 50)
-        continue
+            body = re.sub(r"[ \t\r]+", " ", email_body).strip()
 
-    # Clean up whitespace but preserve newlines so our line-based regexes (like venue extraction) still work
-    body = re.sub(r"[ \t\r]+", " ", body).strip()
+            # --------------------------------------------------
+            # EXTRACT CLEAN SENDER EMAIL ADDRESS
+            # --------------------------------------------------
+            sender_match = re.search(r"<(.+?)>", sender)
+            if sender_match:
+                sender_email = sender_match.group(1).strip().lower()
+            else:
+                sender_email = sender.strip().lower()
 
-    # --------------------------------------------------
-    # PRINT EMAIL HEADER
-    # --------------------------------------------------
+            # --------------------------------------------------
+            # AUTHORIZED SENDER CHECK
+            # --------------------------------------------------
+            if sender_email not in [s.strip().lower() for s in AUTHORIZED_SENDERS]:
+                print(f"UNAUTHORIZED SENDER SKIPPED: {sender_email}\n")
+                print("=" * 50)
+                continue
 
-    print(f"SENDER   : {sender_email}")
-    print(f"RECEIVER : {receiver}")
-    print(f"SUBJECT  : {subject}")
-    print()
+            # --------------------------------------------------
+            # PRINT EMAIL HEADER
+            # --------------------------------------------------
+            print(f"SENDER   : {sender_email}")
+            print(f"RECEIVER : {receiver}")
+            print(f"SUBJECT  : {subject}")
+            print()
 
-    # --------------------------------------------------
-    # ANALYZE EMAIL WITH LOCAL SLM
-    # --------------------------------------------------
+            # rest of your processing (analyze_email, handle event/reschedule/etc.) goes here...
+        # --------------------------------------------------
+        # ANALYZE EMAIL WITH LOCAL SLM
+        # --------------------------------------------------
 
-    print("Analyzing email")
-    result = analyze_email(body, subject)
+        print("Analyzing email")
+        result = analyze_email(body, subject)
 
-    print(f"TYPE     : {result['type'].upper()}")
-    print()
-    print(json.dumps(result, indent=4))
-    print()
+        print(f"TYPE     : {result['type'].upper()}")
+        print()
+        print(json.dumps(result, indent=4))
+        print()
 
-    # ==================================================
-    # HANDLE: NEW EVENT → Save to calendar.json
-    # ==================================================
+        # ==================================================
+        # HANDLE: NEW EVENT → Save to calendar.json
+        # ==================================================
 
-    if result["type"] == "event":
+        if result["type"] == "event":
 
-        if not result["dates"]:
-            print("  WARNING: No dates extracted — skipping calendar entry.\n")
+            if not result["dates"]:
+                print("  WARNING: No dates extracted — skipping calendar entry.\n")
 
-        else:
+            else:
+                print("CALENDAR ACTIONS:")
+                for date in result["dates"]:
+                    entry = {
+                        "title": result["event"],
+                        "date": date,
+                        "from_time": result["from_time"],
+                        "to_time": result["to_time"],
+                        "venue": result["venue"],
+                        "link": result.get("link"),
+                        "status": "schedule"
+                    }
+
+                    # 1. Save locally
+                    add_event(entry)
+
+                    # 2. PUSH TO GOOGLE CALENDAR (NEW LINE)
+                    try:
+                        event_id = add_event_to_calendar({
+                            "title":     entry["title"],
+                            "date":      entry["date"],
+                            "from_time": entry["from_time"] or "09:00 AM",
+                            "to_time":   entry["to_time"],
+                            "venue":     entry["venue"]
+                        })
+
+                        print(f"  [GOOGLE CALENDAR] Event created with ID: {event_id}")
+
+                    except Exception as e:
+                        print(f"  [GOOGLE CALENDAR ERROR] {e}")
+
+        # ==================================================
+        # HANDLE: RESCHEDULED EVENT → Update calendar.json
+        # ==================================================
+
+        elif result["type"] == "reschedule":
+
+            print("RESCHEDULE DETECTED — searching calendar for matching event...")
+
+            clean_event_name = re.sub(r'[\r\n\t]+', ' ', result["event"]).strip()
+            clean_event_name = re.sub(r'\s+', ' ', clean_event_name)
+            match = find_matching_event(
+                event_name = clean_event_name,
+                old_dates  = result["old_dates"]
+            )
+
+            print()
             print("CALENDAR ACTIONS:")
-            for date in result["dates"]:
-                entry = {
-                    "title": result["event"],
-                    "date": date,
-                    "from_time": result["from_time"],
-                    "to_time": result["to_time"],
-                    "venue": result["venue"],
-                    "link": result.get("link"),
-                    "status": "schedule"
-                }
 
-                # 1. Save locally
-                add_event(entry)
+            if match:
+                print(f"  Matched: '{match['title']}' on {match['date']}")
+                update_event(
+                    old_entry       = match,
+                    new_dates       = result["dates"],
+                    new_from_time   = result["from_time"],
+                    new_to_time     = result["to_time"],
+                    new_venue       = result["venue"],
+                    new_link        = result.get("link")
+                )
 
-                # 2. PUSH TO GOOGLE CALENDAR (NEW LINE)
+                # Push reschedule to Google Calendar
+                for date in result["dates"]:
+                    try:
+                        event_id = add_event_to_calendar({
+                            "title":     match["title"],
+                            "date":      date,
+                            "from_time": result["from_time"] or match.get("from_time") or "09:00 AM",
+                            "to_time":   result["to_time"]   or match.get("to_time"),
+                            "venue":     result["venue"]     or match.get("venue")
+                        })
+                        print(f"  [GOOGLE CALENDAR] Rescheduled event updated with ID: {event_id}")
+                    except Exception as e:
+                        print(f"  [GOOGLE CALENDAR ERROR] {e}")
+            else:
+                # No confident match found — add as new entry but flag it
+                print("  No existing event matched — adding as new entry (flagged)")
+                for date in result["dates"]:
+                    entry = {
+                        "title":       f"[POSSIBLY RESCHEDULED] {result['event']}",
+                        "date":        date,
+                        "from_time":   result["from_time"],
+                        "to_time":     result["to_time"],
+                        "venue":       result["venue"],
+                        "link":        result.get("link"),
+                        "status":      "reschedule"
+                    }
+                    add_event(entry)
+
+            print()
+            print("ANNOUNCEMENT ACTIONS:")
+            save_announcement(
+                sender_email = sender_email,
+                subject      = subject,
+                description  = result.get("description") or f"Event '{result['event']}' has been rescheduled."
+            )
+
+        # ==================================================
+        # HANDLE: CANCELLED EVENT → Delete from calendar.json
+        # ==================================================
+
+        elif result["type"] == "cancellation":
+
+            print("CANCELLATION DETECTED — searching calendar for matching event...")
+
+            clean_event_name = re.sub(r'[\r\n\t]+', ' ', result["event"]).strip()
+            clean_event_name = re.sub(r'\s+', ' ', clean_event_name)
+            match = find_matching_event(
+                event_name = clean_event_name,
+                old_dates  = result["old_dates"]
+            )
+
+            print()
+            print("CALENDAR ACTIONS:")
+
+            if match:
+                print(f"  Matched: '{match['title']}' on {match['date']} — deleting.")
+                delete_event(match)
+
+                # Delete from Google Calendar too
                 try:
-                    event_id = add_event_to_calendar({
-                        "title": entry["title"],
-                        "date": entry["date"],
-                        "time": entry["from_time"] or "09:00 AM",  # fallback time
-                        "venue": entry["venue"]
-                    })
+                    service = get_calendar_service()
+                    search_time_min = (datetime.datetime.utcnow() - datetime.timedelta(days=365)).isoformat() + "Z"
+                    search_time_max = (datetime.datetime.utcnow() + datetime.timedelta(days=365)).isoformat() + "Z"
 
-                    print(f"  [GOOGLE CALENDAR] Event created with ID: {event_id}")
+                    # Clean title — remove newlines and extra spaces before searching
+                    clean_title = re.sub(r'[\r\n\t]+', ' ', match['title']).strip()
+                    clean_title = re.sub(r'\s+', ' ', clean_title)
+
+                    existing_events = service.events().list(
+                        calendarId='primary',
+                        timeMin=search_time_min,
+                        timeMax=search_time_max,
+                        q=clean_title,
+                        singleEvents=True
+                    ).execute()
+
+                    deleted = False
+                    for existing in existing_events.get('items', []):
+                            if existing.get('summary', '').strip().lower() == clean_title.lower():                        service.events().delete(calendarId='primary', eventId=existing['id']).execute()
+                            print(f"  [GOOGLE CALENDAR] Deleted cancelled event: '{existing['summary']}'")
+                            deleted = True
+
+                    if not deleted:
+                        print(f"  [GOOGLE CALENDAR] No matching event found to delete.")
 
                 except Exception as e:
                     print(f"  [GOOGLE CALENDAR ERROR] {e}")
 
-    # ==================================================
-    # HANDLE: RESCHEDULED EVENT → Update calendar.json
-    # ==================================================
-
-    elif result["type"] == "reschedule":
-
-        print("RESCHEDULE DETECTED — searching calendar for matching event...")
-
-        match = find_matching_event(
-            event_name = result["event"],
-            old_dates  = result["old_dates"]
-        )
-
-        print()
-        print("CALENDAR ACTIONS:")
-
-        if match:
-            print(f"  Matched: '{match['title']}' on {match['date']}")
-            update_event(
-                old_entry       = match,
-                new_dates       = result["dates"],
-                new_from_time   = result["from_time"],
-                new_to_time     = result["to_time"],
-                new_venue       = result["venue"],
-                new_link        = result.get("link")
+            else:
+                print("  No existing event matched for cancellation.")
+                
+            print()
+            print("ANNOUNCEMENT ACTIONS:")
+            save_announcement(
+                sender_email = sender_email,
+                subject      = subject,
+                description  = result.get("description")
             )
+            existing_events = service.events().list(
+            calendarId='primary',
+            timeMin=search_time_min,
+            timeMax=search_time_max,
+            q=match['title'],
+            singleEvents=True
+            ).execute()
+
+        
+        # ==================================================
+        # HANDLE: ANNOUNCEMENT → Save to announcements.json
+        # NOT added to calendar
+        # ==================================================
+
+        elif result["type"] == "announcement":
+            print("ANNOUNCEMENT — not added to calendar.")
+            print(f"Summary  : {result.get('description')}")
+            print()
+            print("ANNOUNCEMENT ACTIONS:")
+            save_announcement(
+                sender_email = sender_email,
+                subject      = subject,
+                description  = result.get("description")
+            )
+
+        # ==================================================
+        # HANDLE: UNKNOWN (SLM parse failure)
+        # ==================================================
+
         else:
-            # No confident match found — add as new entry but flag it
-            print("  No existing event matched — adding as new entry (flagged)")
-            for date in result["dates"]:
-                entry = {
-                    "title":       f"[POSSIBLY RESCHEDULED] {result['event']}",
-                    "date":        date,
-                    "from_time":   result["from_time"],
-                    "to_time":     result["to_time"],
-                    "venue":       result["venue"],
-                    "link":        result.get("link"),
-                    "status":      "reschedule"
-                }
-                add_event(entry)
+            print("UNKNOWN TYPE — could not process this email.")
 
         print()
-        print("ANNOUNCEMENT ACTIONS:")
-        save_announcement(
-            sender_email = sender_email,
-            subject      = subject,
-            description  = result.get("description") or f"Event '{result['event']}' has been rescheduled."
-        )
-
-    # ==================================================
-    # HANDLE: CANCELLED EVENT → Delete from calendar.json
-    # ==================================================
-
-    elif result["type"] == "cancellation":
-
-        print("CANCELLATION DETECTED — searching calendar for matching event...")
-
-        match = find_matching_event(
-            event_name = result["event"],
-            old_dates  = result["old_dates"]
-        )
-
-        print()
-        print("CALENDAR ACTIONS:")
-
-        if match:
-            print(f"  Matched: '{match['title']}' on {match['date']} — deleting.")
-            delete_event(match)
-        else:
-            print("  No existing event matched for cancellation.")
-            
-        print()
-        print("ANNOUNCEMENT ACTIONS:")
-        save_announcement(
-            sender_email = sender_email,
-            subject      = subject,
-            description  = result.get("description")
-        )
-
-    # ==================================================
-    # HANDLE: ANNOUNCEMENT → Save to announcements.json
-    # NOT added to calendar
-    # ==================================================
-
-    elif result["type"] == "announcement":
-        print("ANNOUNCEMENT — not added to calendar.")
-        print(f"Summary  : {result.get('description')}")
-        print()
-        print("ANNOUNCEMENT ACTIONS:")
-        save_announcement(
-            sender_email = sender_email,
-            subject      = subject,
-            description  = result.get("description")
-        )
-
-    # ==================================================
-    # HANDLE: UNKNOWN (SLM parse failure)
-    # ==================================================
-
-    else:
-        print("UNKNOWN TYPE — could not process this email.")
-
-    print()
-    print("=" * 50)
+        print("=" * 50)
 
 # =========================================================
 # LOGOUT  [COMMENTED OUT — PROTOTYPE MODE]
