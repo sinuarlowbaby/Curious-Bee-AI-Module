@@ -21,7 +21,10 @@ import imaplib, email
 from email.header import decode_header
 from bs4 import BeautifulSoup
 
-load_dotenv(dotenv_path=Path(__file__).parent / ".env")
+
+env_path = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(env_path)
+
 
 # =========================================================
 # CONFIGURATION
