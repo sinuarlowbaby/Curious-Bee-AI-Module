@@ -76,6 +76,9 @@ dist/
 # IDE and OS files
 .vscode/
 .idea/
+
+pyrefly.toml
+
 *.swp
 *.swo
 .DS_Store

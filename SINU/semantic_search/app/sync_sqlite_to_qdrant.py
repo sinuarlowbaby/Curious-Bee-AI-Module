@@ -2,8 +2,14 @@
 sync_sqlite_to_qdrant.py
 --------------------------------------------------------------------------------
 One-shot script: reads every row from curious_bees.db and indexes it
-into the Qdrant vector store, using the same embedding model and metadata
-structure as the FastAPI app (/update_db endpoint).
+into the Qdrant vector store, using the same embedding model, metadata
+structure, and enriched page_content format as the FastAPI app (/update_db).
+
+page_content format (Option 2 — weighted repetition):
+    "<title>. <title>.\nTags: <tag>.\nAbstract: <abstract>"
+
+Title is repeated twice to give it ~2x semantic weight during embedding.
+Tags are surfaced once for keyword proximity.
 
 Run from inside  SINU/semantic search/app/  so that the .env is loaded
 and the relative DB path resolves correctly:
@@ -15,6 +21,12 @@ Options:
     --dry-run   Print what would be uploaded without touching Qdrant.
     --batch N   Upload N documents at a time (default: 32).
 --------------------------------------------------------------------------------
+
+To re-index existing posts (so old embeddings benefit from the new format), run:
+
+    python sync_sqlite_to_qdrant.py --force-recreate
+
+This drops the old collection and re-uploads everything with the enriched content.
 
 to run 
 
@@ -172,15 +184,26 @@ def main():
     for batch in chunked(new_rows, args.batch):
         docs = []
         for row in batch:
-            abstract = row["abstract"] or ""   # embed empty string if no abstract
+            title    = row["title"]    or ""
+            tag      = row["tag"]      or ""
+            abstract = row["abstract"] or ""
+
+            # Option 2: Weighted repetition — mirrors /update_db in api.py.
+            # Title repeated twice → ~2x semantic weight; tags surfaced once.
+            enriched_content = (
+                f"{title}. {title}.\n"
+                f"Tags: {tag}.\n"
+                f"Abstract: {abstract}"
+            )
+
             docs.append(
                 Document(
-                    page_content=abstract,
+                    page_content=enriched_content,
                     metadata={
                         "sqlite_id": row["id"],       # same field /update_db uses
-                        "title":     row["title"],
+                        "title":     title,
                         "author":    row["author"],
-                        "tag":       row["tag"],
+                        "tag":       tag,
                         "date":      row["date"] or "",
                     },
                 )
