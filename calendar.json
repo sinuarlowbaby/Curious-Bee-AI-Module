@@ -1,337 +1,39 @@
 [
     {
-        "title": "*Technovanza 2026*",
-        "date": "2026-07-10",
-        "time": "09:00 AM",
-        "venue": "Main Auditorium, SRMIST, Kattankulathur",
-        "description": "*Technovanza 2026* is a National Level Technical Symposium at SRMIST on July 10-12, 2026. Participate in presentations, hackathons, and guest lectures."
-    },
-    {
-        "title": "*Technovanza 2026*",
-        "date": "2026-07-11",
-        "time": "09:00 AM",
-        "venue": "Main Auditorium, SRMIST, Kattankulathur",
-        "description": "*Technovanza 2026* is a National Level Technical Symposium at SRMIST on July 10-12, 2026. Participate in presentations, hackathons, and guest lectures."
-    },
-    {
-        "title": "*Technovanza 2026*",
-        "date": "2026-07-12",
-        "time": "09:00 AM",
-        "venue": "Main Auditorium, SRMIST, Kattankulathur",
-        "description": "*Technovanza 2026* is a National Level Technical Symposium at SRMIST on July 10-12, 2026. Participate in presentations, hackathons, and guest lectures."
-    },
-    {
-        "title": "*Seminar on Artificial Intelligence and Future Technologies*",
-        "date": "2026-06-20",
-        "time": "09:30 AM",
-        "venue": "Seminar Hall, CSE Block A, SRMIST, Kattankulathur",
-        "description": null
-    },
-    {
-        "title": "*Guest Lecture on Quantum Computing* by Dr. Rajesh Sharma, Senior Scientist, ISRO",
-        "date": "2026-07-05",
-        "time": "02:00 PM",
-        "venue": null,
-        "description": null
-    },
-    {
-        "title": "Research Colloquium on Renewable Energy Systems",
-        "date": "2026-06-28",
-        "time": "09:30 AM",
-        "venue": "EEE Seminar Hall, Electrical Engineering Block, SRMIST"
-    },
-    {
-        "title": "Environmental Day 2026 Weeklong Celebration at SRMIST",
-        "date": "2026-06-01",
-        "time": null,
-        "venue": "SRM Institute of Science and Technology, Kattankulathur - 603203"
-    },
-    {
-        "title": "Environmental Day 2026 Weeklong Celebration at SRMIST",
-        "date": "2026-06-02",
-        "time": null,
-        "venue": "SRM Institute of Science and Technology, Kattankulathur - 603203"
-    },
-    {
-        "title": "Environmental Day 2026 Weeklong Celebration at SRMIST",
-        "date": "2026-06-03",
-        "time": null,
-        "venue": "SRM Institute of Science and Technology, Kattankulathur - 603203"
-    },
-    {
-        "title": "Environmental Day 2026 Weeklong Celebration at SRMIST",
-        "date": "2026-06-04",
-        "time": null,
-        "venue": "SRM Institute of Science and Technology, Kattankulathur - 603203"
-    },
-    {
-        "title": "Environmental Day 2026 Weeklong Celebration at SRMIST",
-        "date": "2026-06-05",
-        "time": null,
-        "venue": "SRM Institute of Science and Technology, Kattankulathur - 603203"
-    },
-    {
-        "title": "Environmental Day 2026 Weeklong Celebration at SRMIST",
-        "date": "2026-06-06",
-        "time": null,
-        "venue": "SRM Institute of Science and Technology, Kattankulathur - 603203"
-    },
-    {
-        "title": "Environmental Day 2026 Weeklong Celebration at SRMIST",
-        "date": "2026-06-07",
-        "time": null,
-        "venue": "SRM Institute of Science and Technology, Kattankulathur - 603203"
-    },
-    {
-        "title": "Environmental Day 2026 Weeklong Celebration at SRMIST",
-        "date": "2026-06-08",
-        "time": null,
-        "venue": "SRM Institute of Science and Technology, Kattankulathur - 603203"
-    },
-    {
-        "title": "Seminar on Artificial Intelligence and Future Technologies",
-        "date": "2026-06-20",
-        "time": "10:00 AM",
-        "venue": "Seminar Hall"
-    },
-    {
-        "title": "Technovanza 2026",
-        "date": "2026-07-10",
-        "time": "09:00 AM",
-        "venue": "Main Auditorium"
-    },
-    {
-        "title": "Technovanza 2026",
-        "date": "2026-07-12",
-        "time": "09:00 AM",
-        "venue": "Main Auditorium"
-    },
-    {
-        "title": "Environmental Day 2026",
-        "date": "2026-06-01",
-        "time": "2:59 PM",
-        "venue": "SRMIST"
-    },
-    {
-        "title": "Seminar on Neural Networks",
-        "date": "2026-06-20",
-        "time": "10:00 AM",
-        "venue": "Seminar Hall"
-    },
-    {
-        "title": "Seminar on Neural Networks",
-        "date": "2026-06-20",
-        "time": "10:00 AM",
-        "venue": "Seminar Hall"
-    },
-    {
-        "title": "Seminar on Neural Networks",
-        "date": "2026-06-20",
-        "time": "10:00 AM",
-        "venue": "Seminar Hall"
-    },
-    {
-        "title": "Technovanza 2026",
-        "date": "2026-07-10",
-        "time": "09:00 AM",
-        "venue": "Main Auditorium"
-    },
-    {
-        "title": "Technovanza 2026",
-        "date": "2026-07-12",
-        "time": "09:00 AM",
-        "venue": "Main Auditorium"
-    },
-    {
-        "title": "Technovanza 2026",
-        "date": "2026-07-11",
-        "time": "09:00 AM",
-        "venue": "Main Auditorium"
-    },
-    {
-        "title": "Seminar on Artificial Intelligence and Future Technologies",
-        "date": "2026-06-20",
-        "time": "10:00 AM",
-        "venue": "Seminar Hall"
-    },
-    {
-        "title": "Guest Lecture on Quantum Computing",
-        "date": "2026-07-05",
-        "time": "02:00 PM",
-        "venue": null
-    },
-    {
-        "title": "Annual Sports Meet - Sportanza 2026",
-        "date": "2026-08-03",
-        "time": "08:00 AM",
-        "venue": "University Sports Complex"
-    },
-    {
-        "title": "Annual Sports Meet - Sportanza 2026",
-        "date": "2026-08-05",
-        "time": "08:00 AM",
-        "venue": "University Sports Complex"
-    },
-    {
-        "title": "Annual Sports Meet - Sportanza 2026",
-        "date": "2026-08-04",
-        "time": "08:00 AM",
-        "venue": "University Sports Complex"
-    },
-    {
-        "title": "National Level Technical Symposium - Technovanza 2026",
-        "date": "2026-07-10",
-        "time": "09:00 AM",
-        "venue": "Main Auditorium, SRMIST, Kattankulathur"
-    },
-    {
-        "title": "National Level Technical Symposium - Technovanza 2026",
-        "date": "2026-07-12",
-        "time": "09:00 AM",
-        "venue": "Main Auditorium, SRMIST, Kattankulathur"
-    },
-    {
-        "title": "National Level Technical Symposium - Technovanza 2026",
-        "date": "2026-07-11",
-        "time": "09:00 AM",
-        "venue": "Main Auditorium, SRMIST, Kattankulathur"
-    },
-    {
-        "title": "Seminar on Artificial Intelligence and Future Technologies",
-        "date": "2026-06-20",
-        "time": "10:00 AM",
-        "venue": "Seminar Hall, CSE Block A, SRMIST, Kattankulathur"
-    },
-    {
-        "title": "Workshop on Data Science and Machine Learning - Register Now",
-        "date": "2026-06-28",
-        "time": "09:00 AM onwards",
-        "venue": "Data Science Lab, CSE Block C, SRMIST, Kattankulathur Topics Covered:- Python for Data Science (NumPy, Pandas, Matplotlib)- Exploratory Data Analysis and Feature Engineering- Supervised and Unsupervised Learning with Scikit-Learn- Model Evaluation and Deployment using Flask Registration is mandatory",
-        "links": []
-    },
-    {
-        "title": "Workshop on Data Science and Machine Learning - Register Now",
-        "date": "2026-06-29",
-        "time": "09:00 AM onwards",
-        "venue": "Data Science Lab, CSE Block C, SRMIST, Kattankulathur Topics Covered:- Python for Data Science (NumPy, Pandas, Matplotlib)- Exploratory Data Analysis and Feature Engineering- Supervised and Unsupervised Learning with Scikit-Learn- Model Evaluation and Deployment using Flask Registration is mandatory",
-        "links": []
-    },
-    {
-        "title": "Workshop on Data Science and Machine Learning - Register Now",
-        "date": "2026-06-28",
-        "time": "09:00 AM onwards",
-        "venue": "Data Science Lab, CSE Block C, SRMIST, Kattankulathur Topics Covered:- Python for Data Science (NumPy, Pandas, Matplotlib)- Exploratory Data Analysis and Feature Engineering- Supervised and Unsupervised Learning with Scikit-Learn- Model Evaluation and Deployment using Flask Registration is mandatory",
-        "links": [
-            "https://forms.gle/xKd92mNpQv7BtJeR8"
-        ]
-    },
-    {
-        "title": "Workshop on Data Science and Machine Learning - Register Now",
-        "date": "2026-06-29",
-        "time": "09:00 AM onwards",
-        "venue": "Data Science Lab, CSE Block C, SRMIST, Kattankulathur Topics Covered:- Python for Data Science (NumPy, Pandas, Matplotlib)- Exploratory Data Analysis and Feature Engineering- Supervised and Unsupervised Learning with Scikit-Learn- Model Evaluation and Deployment using Flask Registration is mandatory",
-        "links": [
-            "https://forms.gle/xKd92mNpQv7BtJeR8"
-        ]
-    },
-    {
-        "title": "Webinar on Generative AI and Large Language Models - Free Registration",
-        "date": "2026-07-03",
-        "time": "03:00 PM",
-        "venue": "Zoom",
-        "link": "https://srmist.zoom.us/webinar/register/genai2026"
-    },
-    {
-        "title": "CodeStorm 2026 - National Level Hackathon | Register Your Team",
-        "date": "2026-07-19",
-        "time": "10:00 AM",
-        "venue": "Innovation Hub, Ground Floor, IT Block, SRMIST, Kattankulathur Eligibility: Open to all undergraduate and postgraduate students across India",
-        "link": "https://unstop.com/hackathons/codestorm-2026-srmist"
-    },
-    {
-        "title": "CodeStorm 2026 - National Level Hackathon | Register Your Team",
-        "date": "2026-07-20",
-        "time": "10:00 AM",
-        "venue": "Innovation Hub, Ground Floor, IT Block, SRMIST, Kattankulathur Eligibility: Open to all undergraduate and postgraduate students across India",
-        "link": "https://unstop.com/hackathons/codestorm-2026-srmist"
-    },
-    {
-        "title": "CodeStorm 2026 - National Level Hackathon | Register Your Team",
-        "date": "2026-07-19",
-        "time": "10:00 AM",
-        "venue": "Innovation Hub, Ground Floor, IT Block, SRMIST, Kattankulathur Eligibility: Open to all undergraduate and postgraduate students across India",
-        "link": "https://unstop.com/hackathons/codestorm-2026-srmist"
-    },
-    {
-        "title": "CodeStorm 2026 - National Level Hackathon | Register Your Team",
-        "date": "2026-07-20",
-        "time": "10:00 AM",
-        "venue": "Innovation Hub, Ground Floor, IT Block, SRMIST, Kattankulathur Eligibility: Open to all undergraduate and postgraduate students across India",
-        "link": "https://unstop.com/hackathons/codestorm-2026-srmist"
-    },
-    {
-        "title": "Guest Lecture on VLSI Design and Embedded Systems",
-        "date": "2026-07-08",
-        "time": "Wednesday",
-        "venue": "ECE Seminar Hall, Electronics Block, SRMIST, Kattankulathur The lecture will cover fundamentals of VLSI design flow, FPGA programming, and current industry trends in embedded system development",
-        "link": null
-    },
-    {
-        "title": "Seminar on Artificial Intelligence and Future Technologies",
-        "date": "2026-06-20",
-        "from_time": "10:00 AM",
-        "to_time": null,
-        "venue": "Seminar Hall, CSE Block A,"
-    },
-    {
-        "title": "*Seminar on Artificial Intelligence and Future Technologies*",
-        "date": "2026-06-20",
-        "from_time": "10:00 AM",
-        "to_time": null,
-        "venue": "Seminar Hall, CSE Block A,",
-        "link": null
-    },
-    {
-        "title": "National Level Technical Symposium - Technovanza 2026",
+        "title": "National Level Technical Symposium",
         "date": "2026-07-10",
         "from_time": "09:00 AM",
         "to_time": null,
-        "venue": "Main\nAuditorium, SRMIST, Kattankulathur",
-        "link": null
-    },
-    {
-        "title": "National Level Technical Symposium - Technovanza 2026",
-        "date": "2026-07-12",
-        "from_time": "09:00 AM",
-        "to_time": null,
-        "venue": "Main\nAuditorium, SRMIST, Kattankulathur",
-        "link": null
-    },
-    {
-        "title": "National Level Technical Symposium - Technovanza 2026",
-        "date": "2026-07-11",
-        "from_time": "09:00 AM",
-        "to_time": null,
-        "venue": "Main\nAuditorium, SRMIST, Kattankulathur",
-        "link": null
-    },
-    {
-        "title": "Seminar on Artificial Intelligence and Future Technologies",
-        "date": "2026-06-20",
-        "from_time": "10:00 AM",
-        "to_time": null,
-        "venue": "Seminar Hall, CSE Block A,",
-        "link": null,
-        "status": "reschedule"
-    },
-    {
-        "title": "Seminar on Artificial Intelligence and Future Technologies",
-        "date": "2026-06-14",
-        "from_time": "10:00 AM",
-        "to_time": null,
-        "venue": "Seminar Hall, CSE Block A, SRMIST, Kattankulathur",
+        "venue": "Main Auditorium, SRMIST, Kattankulathur",
         "link": null,
         "status": "schedule"
+    },
+    {
+        "title": "National Level Technical Symposium",
+        "date": "2026-07-12",
+        "from_time": "09:00 AM",
+        "to_time": null,
+        "venue": "Main Auditorium, SRMIST, Kattankulathur",
+        "link": null,
+        "status": "schedule"
+    },
+    {
+        "title": "National Level Technical Symposium",
+        "date": "2026-07-11",
+        "from_time": "09:00 AM",
+        "to_time": null,
+        "venue": "Main Auditorium, SRMIST, Kattankulathur",
+        "link": null,
+        "status": "schedule"
+    },
+    {
+        "title": "Seminar on Artificial Intelligence and Future\nTechnologies",
+        "date": "2026-06-20",
+        "from_time": "10:00 AM",
+        "to_time": null,
+        "venue": "Seminar Hall,\nCSE Block A, SRMIST, Kattankulathur",
+        "link": null,
+        "status": "reschedule"
     },
     {
         "title": "Guest Lecture on Quantum Computing",
@@ -344,19 +46,10 @@
     },
     {
         "title": "Annual Sports Meet - Sportanza 2026",
-        "date": "2026-08-03",
-        "from_time": "08:00 AM",
-        "to_time": null,
-        "venue": "University Sports\nComplex, SRMIST, Kattankulathur",
-        "link": null,
-        "status": "schedule"
-    },
-    {
-        "title": "Annual Sports Meet - Sportanza 2026",
         "date": "2026-08-05",
         "from_time": "08:00 AM",
         "to_time": null,
-        "venue": "University Sports\nComplex, SRMIST, Kattankulathur",
+        "venue": "University Sports Complex, SRMIST, Kattankulathur",
         "link": null,
         "status": "schedule"
     },
@@ -365,35 +58,53 @@
         "date": "2026-08-04",
         "from_time": "08:00 AM",
         "to_time": null,
-        "venue": "University Sports\nComplex, SRMIST, Kattankulathur",
+        "venue": "University Sports Complex, SRMIST, Kattankulathur",
         "link": null,
         "status": "schedule"
     },
     {
-        "title": "Sportanza 2026",
-        "date": "2026-08-03",
-        "from_time": "08:00 AM",
-        "to_time": null,
-        "venue": "University Sports\nComplex, SRMIST, Kattankulathur",
-        "link": "https://forms.gle/MgSofLc24quWAnXR8",
-        "status": "schedule"
-    },
-    {
-        "title": "Sportanza 2026",
+        "title": "Annual Sports Meet - Sportanza 2026",
         "date": "2026-08-05",
         "from_time": "08:00 AM",
         "to_time": null,
-        "venue": "University Sports\nComplex, SRMIST, Kattankulathur",
-        "link": "https://forms.gle/MgSofLc24quWAnXR8",
-        "status": "schedule"
+        "venue": "University Sports Complex",
+        "link": null,
+        "status": "reschedule"
     },
     {
-        "title": "Sportanza 2026",
+        "title": "Annual Sports Meet - Sportanza 2026",
+        "date": "2026-08-10",
+        "from_time": "08:00 AM",
+        "to_time": null,
+        "venue": "University Sports Complex",
+        "link": null,
+        "status": "reschedule"
+    },
+    {
+        "title": "Annual Sports Meet - Sportanza 2026",
+        "date": "2026-08-12",
+        "from_time": "08:00 AM",
+        "to_time": null,
+        "venue": "University Sports Complex",
+        "link": null,
+        "status": "reschedule"
+    },
+    {
+        "title": "Annual Sports Meet - Sportanza 2026",
         "date": "2026-08-04",
         "from_time": "08:00 AM",
         "to_time": null,
-        "venue": "University Sports\nComplex, SRMIST, Kattankulathur",
-        "link": "https://forms.gle/MgSofLc24quWAnXR8",
-        "status": "schedule"
+        "venue": "University Sports Complex",
+        "link": null,
+        "status": "reschedule"
+    },
+    {
+        "title": "Annual Sports Meet - Sportanza 2026",
+        "date": "2026-08-11",
+        "from_time": "08:00 AM",
+        "to_time": null,
+        "venue": "University Sports Complex",
+        "link": null,
+        "status": "reschedule"
     }
 ]
