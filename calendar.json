@@ -1,0 +1,110 @@
+[
+    {
+        "title": "National Level Technical Symposium",
+        "date": "2026-07-10",
+        "from_time": "09:00 AM",
+        "to_time": null,
+        "venue": "Main Auditorium, SRMIST, Kattankulathur",
+        "link": null,
+        "status": "schedule"
+    },
+    {
+        "title": "National Level Technical Symposium",
+        "date": "2026-07-12",
+        "from_time": "09:00 AM",
+        "to_time": null,
+        "venue": "Main Auditorium, SRMIST, Kattankulathur",
+        "link": null,
+        "status": "schedule"
+    },
+    {
+        "title": "National Level Technical Symposium",
+        "date": "2026-07-11",
+        "from_time": "09:00 AM",
+        "to_time": null,
+        "venue": "Main Auditorium, SRMIST, Kattankulathur",
+        "link": null,
+        "status": "schedule"
+    },
+    {
+        "title": "Seminar on Artificial Intelligence and Future\nTechnologies",
+        "date": "2026-06-14",
+        "from_time": "10:00 AM",
+        "to_time": null,
+        "venue": "Seminar Hall, CSE Block A, SRMIST, Kattankulathur",
+        "link": null,
+        "status": "reschedule"
+    },
+    {
+        "title": "Seminar on Artificial Intelligence and Future\nTechnologies",
+        "date": "2026-06-20",
+        "from_time": "10:00 AM",
+        "to_time": null,
+        "venue": "Seminar Hall, CSE Block A, SRMIST, Kattankulathur",
+        "link": null,
+        "status": "reschedule"
+    },
+    {
+        "title": "Guest Lecture on Quantum Computing",
+        "date": "2026-07-05",
+        "from_time": "02:00 PM",
+        "to_time": null,
+        "venue": null,
+        "link": null,
+        "status": "schedule"
+    },
+    {
+        "title": "Annual Sports Meet - Sportanza 2026",
+        "date": "2026-08-03",
+        "from_time": "08:00 AM",
+        "to_time": null,
+        "venue": "SRMIST Cricket Ground and Open Arena, Kattankulathur",
+        "link": null,
+        "status": "reschedule"
+    },
+    {
+        "title": "Annual Sports Meet - Sportanza 2026",
+        "date": "2026-08-05",
+        "from_time": "08:00 AM",
+        "to_time": null,
+        "venue": "SRMIST Cricket Ground and Open Arena, Kattankulathur",
+        "link": null,
+        "status": "reschedule"
+    },
+    {
+        "title": "Annual Sports Meet - Sportanza 2026",
+        "date": "2026-08-10",
+        "from_time": "08:00 AM",
+        "to_time": null,
+        "venue": "SRMIST Cricket Ground and Open Arena, Kattankulathur",
+        "link": null,
+        "status": "reschedule"
+    },
+    {
+        "title": "Annual Sports Meet - Sportanza 2026",
+        "date": "2026-08-12",
+        "from_time": "08:00 AM",
+        "to_time": null,
+        "venue": "SRMIST Cricket Ground and Open Arena, Kattankulathur",
+        "link": null,
+        "status": "reschedule"
+    },
+    {
+        "title": "Annual Sports Meet - Sportanza 2026",
+        "date": "2026-08-04",
+        "from_time": "08:00 AM",
+        "to_time": null,
+        "venue": "SRMIST Cricket Ground and Open Arena, Kattankulathur",
+        "link": null,
+        "status": "reschedule"
+    },
+    {
+        "title": "Annual Sports Meet - Sportanza 2026",
+        "date": "2026-08-11",
+        "from_time": "08:00 AM",
+        "to_time": null,
+        "venue": "SRMIST Cricket Ground and Open Arena, Kattankulathur",
+        "link": null,
+        "status": "reschedule"
+    }
+]
