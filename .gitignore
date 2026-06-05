@@ -9,6 +9,12 @@ credential.json
 credentials.json
 **/credential.json
 **/credentials.json
+token.pickle
+**/token.pickle
+*.pickle
+token.json
+**/token.json
+
 
 # Python bytecode and caches
 __pycache__/
@@ -58,6 +64,7 @@ checkpoints/
 *.pt
 *.pth
 *.onnx
+*.pickle
 *.pkl
 *.joblib
 .ipynb_checkpoints/
