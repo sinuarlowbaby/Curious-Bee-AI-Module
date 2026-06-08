@@ -144,7 +144,15 @@ def add_event(entry):
     print(f"  [ADDED]   '{entry['title']}' on {entry['date']}")
 
 
-def update_event(old_entry, new_dates, new_from_time, new_to_time, new_venue, new_link=None):
+def update_event(
+    old_entry,
+    old_dates,
+    new_dates,
+    new_from_time,
+    new_to_time,
+    new_venue,
+    new_link=None
+):
     """
     Remove all old calendar entries for this event title + old date,
     then insert new entries with updated dates.
@@ -156,7 +164,7 @@ def update_event(old_entry, new_dates, new_from_time, new_to_time, new_venue, ne
         e for e in calendar
         if not (
             e["title"] == old_entry["title"] and
-            e["date"]  == old_entry["date"]
+            e["date"] in old_dates 
         )
     ]
 
@@ -292,6 +300,19 @@ def is_likely_time(text):
         return True
     return False
 
+def expand_date_range(start_str, end_str):
+    start_dt = dateutil.parser.parse(start_str, fuzzy=True)
+    end_dt = dateutil.parser.parse(end_str, fuzzy=True)
+
+    dates = []
+
+    current = start_dt
+    while current <= end_dt:
+        dates.append(current.strftime("%Y-%m-%d"))
+        current += datetime.timedelta(days=1)
+
+    return dates
+
 
 def analyze_email(body, subject):
     """
@@ -345,7 +366,7 @@ def analyze_email(body, subject):
             if email_type == "announcement":
                 return result
 
-        extracted_dates = []
+        extracted_date_entities = []
 
         # Keywords that indicate a date is a DEADLINE, not an event date
         DEADLINE_KEYWORDS = [
@@ -364,32 +385,7 @@ def analyze_email(body, subject):
             elif label == "date":
                 if not is_likely_date(val):
                     continue
-                try:
-                    dt = dateutil.parser.parse(val, fuzzy=True)
-                    date_str = dt.strftime("%Y-%m-%d")
-
-                    # ---- DEADLINE FILTER ----
-                    # Split text into sentences and only check the sentence
-                    # that contains this date — prevents cross-sentence bleed
-                    # where a deadline phrase in sentence A wrongly flags a
-                    # legitimate event date in sentence B.
-                    sentences = re.split(r'(?<=[.!?\n])\s+', text)
-                    date_sentence = ""
-                    for sentence in sentences:
-                        if val.lower() in sentence.lower():
-                            date_sentence = sentence.lower()
-                            break
-
-                    is_deadline = any(kw in date_sentence for kw in DEADLINE_KEYWORDS)
-
-                    if is_deadline:
-                        print(f"  [SKIP]  '{val}' looks like a deadline — not an event date")
-                    else:
-                        extracted_dates.append(date_str)
-
-                except Exception:
-                    # Ignore dates that can't be parsed
-                    pass
+                extracted_date_entities.append(ent)
             elif label == "time" and not result["time"]:
                 if not is_likely_time(val):
                     continue
@@ -459,13 +455,18 @@ def analyze_email(body, subject):
         # phrases leave out the intermediate dates. We detect range patterns
         # and fill them in.
         # --------------------------------------------------
+        search_text = re.sub(r"\s+", " ", text)
         range_patterns = [
             r"from\s+(.+?)\s+to\s+(.+?)(?:\s+(?:at|in|starting|each)|[,\.\n]|$)",
             r"(\w+ \d{1,2}(?:st|nd|rd|th)?(?:,?\s*\d{4})?)\s+(?:to|through|till|until)\s+(\w+ \d{1,2}(?:st|nd|rd|th)?(?:,?\s*\d{4})?)",
         ]
-        range_dates = []
+        
+        # Collect all date references (ranges and point dates) with their positions
+        date_references = []
+
+        # 1. Add regex range matches
         for pattern in range_patterns:
-            for match in re.finditer(pattern, text, re.IGNORECASE):
+            for match in re.finditer(pattern, search_text, re.IGNORECASE):
                 start_str, end_str = match.group(1).strip(), match.group(2).strip()
                 if not is_likely_date(start_str) or not is_likely_date(end_str):
                     continue
@@ -474,21 +475,80 @@ def analyze_email(body, subject):
                     end_dt   = dateutil.parser.parse(end_str,   fuzzy=True)
                     if start_dt <= end_dt:
                         delta = (end_dt - start_dt).days
-                        for i in range(delta + 1):
-                            day = start_dt + datetime.timedelta(days=i)
-                            range_dates.append(day.strftime("%Y-%m-%d"))
-                        print(f"  [RANGE] Expanded '{start_str}' → '{end_str}' into {delta + 1} day(s)")
+                        expanded = [(start_dt + datetime.timedelta(days=i)).strftime("%Y-%m-%d") for i in range(delta + 1)]
+                        date_references.append({
+                            "start": match.start(),
+                            "end": match.end(),
+                            "type": "range",
+                            "dates": expanded,
+                            "raw_tuple": (start_str, end_str)
+                        })
                 except Exception:
                     pass
 
-        # Merge GLiNER point-dates with range-expanded dates
-        all_dates = extracted_dates + range_dates
+        # 2. Add GLiNER point dates (only if they don't overlap with range matches)
+        for ent in extracted_date_entities:
+            val = ent["text"]
+            try:
+                # Find start/end positions in search_text
+                ent_match = re.search(re.escape(val), search_text)
+                if not ent_match:
+                    continue
+                ent_start = ent_match.start()
+                ent_end = ent_match.end()
+                
+                # Check overlap with range matches
+                overlap = False
+                for r in date_references:
+                    if ent_start < r["end"] and ent_end > r["start"]:
+                        overlap = True
+                        break
+                if overlap:
+                    continue
+                    
+                # Deadline check
+                sentences = re.split(r'(?<=[.!?\n])\s+', text)
+                date_sentence = ""
+                for sentence in sentences:
+                    if val.lower() in sentence.lower():
+                        date_sentence = sentence.lower()
+                        break
+                is_deadline = any(kw in date_sentence for kw in DEADLINE_KEYWORDS)
+                if is_deadline:
+                    print(f"  [SKIP]  '{val}' looks like a deadline — not an event date")
+                    continue
 
-        # Remove duplicates and sort chronologically
-        seen = set()
-        unique_dates = sorted(
-            [x for x in all_dates if not (x in seen or seen.add(x))]
-        )
+                dt = dateutil.parser.parse(val, fuzzy=True)
+                date_str = dt.strftime("%Y-%m-%d")
+                date_references.append({
+                    "start": ent_start,
+                    "end": ent_end,
+                    "type": "point",
+                    "dates": [date_str]
+                })
+            except Exception:
+                pass
+
+        # 3. Sort date references by their starting position in search_text
+        date_references.sort(key=lambda x: x["start"])
+
+        # 4. Deduplicate overlapping references (keep the first/longer one)
+        deduped_refs = []
+        for ref in date_references:
+            overlap = False
+            for accepted in deduped_refs:
+                if ref["start"] < accepted["end"] and ref["end"] > accepted["start"]:
+                    overlap = True
+                    break
+            if not overlap:
+                deduped_refs.append(ref)
+
+        # 5. Extract unique dates
+        all_dates_set = set()
+        for ref in deduped_refs:
+            for d in ref["dates"]:
+                all_dates_set.add(d)
+        unique_dates = sorted(list(all_dates_set))
 
         if email_type == "cancellation":
             result["old_dates"] = unique_dates
@@ -498,10 +558,29 @@ def analyze_email(body, subject):
             # "new date will be announced" notices naturally present in the email.
             result["description"] = extract_main_body(body)
         elif email_type == "reschedule":
-            # For reschedule, assume first date is old and rest are new
-            if len(unique_dates) >= 2:
-                result["old_dates"] = [unique_dates[0]]
-                result["dates"] = unique_dates[1:]
+            # For reschedule, partition dates into old and new based on context classification
+            if len(deduped_refs) >= 2:
+                ref_a = deduped_refs[0]
+                ref_b = deduped_refs[1]
+                
+                scores = [0, 0]
+                for idx, ref in enumerate([ref_a, ref_b]):
+                    start_pos = ref["start"]
+                    context = search_text[max(0, start_pos - 60):start_pos].lower()
+                    
+                    if any(kw in context for kw in ["instead of", "original", "originally", "scheduled from", "postponed from", "previous", "previously"]):
+                        scores[idx] -= 2
+                    if any(kw in context for kw in ["now", "rescheduled to", "postponed to", "conducted from", "new date", "will be"]):
+                        scores[idx] += 2
+                
+                if scores[0] > scores[1]:
+                    result["old_dates"] = ref_b["dates"]
+                    result["dates"] = ref_a["dates"]
+                else:
+                    result["old_dates"] = ref_a["dates"]
+                    result["dates"] = ref_b["dates"]
+            elif len(deduped_refs) == 1:
+                result["dates"] = deduped_refs[0]["dates"]
             else:
                 result["dates"] = unique_dates
         else:
@@ -527,7 +606,9 @@ def analyze_email(body, subject):
                         reg_links.append(link)
             
             result["link"] = reg_links[0] if reg_links else None
-
+            print("DEBUG UNIQUE DATES:", unique_dates)
+            print("DEBUG RESULT DATES:", result["dates"])
+            
         return result
 
     except Exception as e:
@@ -604,6 +685,7 @@ def add_event_to_calendar(event_data):
         end_dt = start_dt + datetime.timedelta(hours=1)
 
     # Search across a wide range to find ANY existing event with same title
+    clean_title = event_data['title'].strip()
     search_time_min = (datetime.datetime.utcnow() - datetime.timedelta(days=365)).isoformat() + "Z"
     search_time_max = (datetime.datetime.utcnow() + datetime.timedelta(days=365)).isoformat() + "Z"
 
@@ -618,7 +700,7 @@ def add_event_to_calendar(event_data):
     for existing in existing_events.get('items', []):
         existing_summary = existing.get('summary', '').strip().lower()
         existing_date = existing.get('start', {}).get('dateTime', '')[:10]
-        if existing_summary == clean_title.lower() and existing_date != event_data['date']:
+        if existing_summary == clean_title.lower() and existing_date == event_data['date']:
             service.events().delete(calendarId='primary', eventId=existing['id']).execute()
             print(f"  [GOOGLE CALENDAR] Deleted existing event: '{existing['summary']}' on {existing_date}")
 
@@ -820,219 +902,243 @@ for latest_email_id in email_ids:
             print()
 
             # rest of your processing (analyze_email, handle event/reschedule/etc.) goes here...
-        # --------------------------------------------------
-        # ANALYZE EMAIL WITH LOCAL SLM
-        # --------------------------------------------------
+            # --------------------------------------------------
+            # ANALYZE EMAIL WITH LOCAL SLM
+            # --------------------------------------------------
 
-        print("Analyzing email")
-        result = analyze_email(body, subject)
+            print("Analyzing email")
+            result = analyze_email(body, subject)
 
-        print(f"TYPE     : {result['type'].upper()}")
-        print()
-        print(json.dumps(result, indent=4))
-        print()
-
-        # ==================================================
-        # HANDLE: NEW EVENT → Save to calendar.json
-        # ==================================================
-
-        if result["type"] == "event":
-
-            if not result["dates"]:
-                print("  WARNING: No dates extracted — skipping calendar entry.\n")
-
-            else:
-                print("CALENDAR ACTIONS:")
-                for date in result["dates"]:
-                    entry = {
-                        "title": result["event"],
-                        "date": date,
-                        "from_time": result["from_time"],
-                        "to_time": result["to_time"],
-                        "venue": result["venue"],
-                        "link": result.get("link"),
-                        "status": "schedule"
-                    }
-
-                    # 1. Save locally
-                    add_event(entry)
-
-                    # 2. PUSH TO GOOGLE CALENDAR (NEW LINE)
-                    try:
-                        event_id = add_event_to_calendar({
-                            "title":     entry["title"],
-                            "date":      entry["date"],
-                            "from_time": entry["from_time"] or "09:00 AM",
-                            "to_time":   entry["to_time"],
-                            "venue":     entry["venue"]
-                        })
-
-                        print(f"  [GOOGLE CALENDAR] Event created with ID: {event_id}")
-
-                    except Exception as e:
-                        print(f"  [GOOGLE CALENDAR ERROR] {e}")
-
-        # ==================================================
-        # HANDLE: RESCHEDULED EVENT → Update calendar.json
-        # ==================================================
-
-        elif result["type"] == "reschedule":
-
-            print("RESCHEDULE DETECTED — searching calendar for matching event...")
-
-            clean_event_name = re.sub(r'[\r\n\t]+', ' ', result["event"]).strip()
-            clean_event_name = re.sub(r'\s+', ' ', clean_event_name)
-            match = find_matching_event(
-                event_name = clean_event_name,
-                old_dates  = result["old_dates"]
-            )
-
+            print(f"TYPE     : {result['type'].upper()}")
             print()
-            print("CALENDAR ACTIONS:")
+            print(json.dumps(result, indent=4))
+            print()
 
-            if match:
-                print(f"  Matched: '{match['title']}' on {match['date']}")
-                update_event(
-                    old_entry       = match,
-                    new_dates       = result["dates"],
-                    new_from_time   = result["from_time"],
-                    new_to_time     = result["to_time"],
-                    new_venue       = result["venue"],
-                    new_link        = result.get("link")
+            # ==================================================
+            # HANDLE: NEW EVENT → Save to calendar.json
+            # ==================================================
+
+            if result["type"] == "event":
+
+                if not result["dates"]:
+                    print("  WARNING: No dates extracted — skipping calendar entry.\n")
+
+                else:
+                    print("CALENDAR ACTIONS:")
+                    for date in result["dates"]:
+                        entry = {
+                            "title": result["event"],
+                            "date": date,
+                            "from_time": result["from_time"],
+                            "to_time": result["to_time"],
+                            "venue": result["venue"],
+                            "link": result.get("link"),
+                            "status": "schedule"
+                        }
+
+                        # 1. Save locally
+                        add_event(entry)
+
+                        # 2. PUSH TO GOOGLE CALENDAR (NEW LINE)#or "09:00 AM"
+                        try:
+                            event_id = add_event_to_calendar({
+                                "title":     entry["title"],
+                                "date":      entry["date"],
+                                "from_time": entry["from_time"] ,
+                                "to_time":   entry["to_time"],
+                                "venue":     entry["venue"]
+                            })
+
+                            print(f"  [GOOGLE CALENDAR] Event created with ID: {event_id}")
+
+                        except Exception as e:
+                            print(f"  [GOOGLE CALENDAR ERROR] {e}")
+
+            # ==================================================
+            # HANDLE: RESCHEDULED EVENT → Update calendar.json
+            # ==================================================
+
+            elif result["type"] == "reschedule":
+
+                print("RESCHEDULE DETECTED — searching calendar for matching event...")
+
+                clean_event_name = re.sub(r'[\r\n\t]+', ' ', result["event"]).strip()
+                clean_event_name = re.sub(r'\s+', ' ', clean_event_name)
+                match = find_matching_event(
+                    event_name = clean_event_name,
+                    old_dates  = result["old_dates"]
                 )
 
-                # Push reschedule to Google Calendar
-                for date in result["dates"]:
+                print()
+                print("CALENDAR ACTIONS:")
+
+                if match:
+                    print(f"  Matched: '{match['title']}' on {match['date']}")
+                    update_event(
+                        old_entry=match,
+                        old_dates=result["old_dates"],
+                        new_dates=result["dates"],
+                        new_from_time=result["from_time"],
+                        new_to_time=result["to_time"],
+                        new_venue=result["venue"],
+                        new_link=result.get("link")
+                    )
+                    # Delete old events from Google Calendar
                     try:
-                        event_id = add_event_to_calendar({
-                            "title":     match["title"],
-                            "date":      date,
-                            "from_time": result["from_time"] or match.get("from_time") or "09:00 AM",
-                            "to_time":   result["to_time"]   or match.get("to_time"),
-                            "venue":     result["venue"]     or match.get("venue")
-                        })
-                        print(f"  [GOOGLE CALENDAR] Rescheduled event updated with ID: {event_id}")
+                        service = get_calendar_service()
+                        search_time_min = (datetime.datetime.utcnow() - datetime.timedelta(days=365)).isoformat() + "Z"
+                        search_time_max = (datetime.datetime.utcnow() + datetime.timedelta(days=365)).isoformat() + "Z"
+
+                        clean_title = re.sub(r'[\r\n\t]+', ' ', match['title']).strip()
+                        clean_title = re.sub(r'\s+', ' ', clean_title)
+
+                        existing_events = service.events().list(
+                            calendarId='primary',
+                            timeMin=search_time_min,
+                            timeMax=search_time_max,
+                            q=clean_title,
+                            singleEvents=True
+                        ).execute()
+
+                        target_old_dates = result["old_dates"] if result["old_dates"] else [match["date"]]
+
+                        for existing in existing_events.get('items', []):
+                            existing_summary = existing.get('summary', '').strip().lower()
+                            if existing_summary == clean_title.lower():
+                                existing_date = existing.get('start', {}).get('dateTime', '')[:10]
+                                if not existing_date:
+                                    existing_date = existing.get('start', {}).get('date', '')
+                                print(f"  [DEBUG] Found GCal event: '{existing.get('summary')}' on '{existing_date}' | target_old_dates: {target_old_dates}")
+
+                                if existing_date in target_old_dates:
+                                    service.events().delete(calendarId='primary', eventId=existing['id']).execute()
+                                    print(f"  [GOOGLE CALENDAR] Deleted old rescheduled event: '{existing['summary']}' on {existing_date}")
+                    except Exception as e:
+                        print(f"  [GOOGLE CALENDAR DELETE ERROR] {e}")
+
+                    # Push reschedule to Google Calendar
+                    for date in result["dates"]:
+                        try:
+                            event_id = add_event_to_calendar({
+                                "title":     match["title"],
+                                "date":      date,
+                                "from_time": result["from_time"] or match.get("from_time") or "09:00 AM",
+                                "to_time":   result["to_time"]   or match.get("to_time"),
+                                "venue":     result["venue"]     or match.get("venue")
+                            })
+                            print(f"  [GOOGLE CALENDAR] Rescheduled event updated with ID: {event_id}")
+                        except Exception as e:
+                            print(f"  [GOOGLE CALENDAR ERROR] {e}")
+                else:
+                    # No confident match found — add as new entry but flag it
+                    print("  No existing event matched — adding as new entry (flagged)")
+                    for date in result["dates"]:
+                        entry = {
+                            "title":       f"[POSSIBLY RESCHEDULED] {result['event']}",
+                            "date":        date,
+                            "from_time":   result["from_time"],
+                            "to_time":     result["to_time"],
+                            "venue":       result["venue"],
+                            "link":        result.get("link"),
+                            "status":      "reschedule"
+                        }
+                        add_event(entry)
+
+                print()
+                print("ANNOUNCEMENT ACTIONS:")
+                save_announcement(
+                    sender_email = sender_email,
+                    subject      = subject,
+                    description  = result.get("description") or f"Event '{result['event']}' has been rescheduled."
+                )
+
+            # ==================================================
+            # HANDLE: CANCELLED EVENT → Delete from calendar.json
+            # ==================================================
+
+            elif result["type"] == "cancellation":
+
+                print("CANCELLATION DETECTED — searching calendar for matching event...")
+
+                clean_event_name = re.sub(r'[\r\n\t]+', ' ', result["event"]).strip()
+                clean_event_name = re.sub(r'\s+', ' ', clean_event_name)
+                match = find_matching_event(
+                    event_name = clean_event_name,
+                    old_dates  = result["old_dates"]
+                )
+
+                print()
+                print("CALENDAR ACTIONS:")
+
+                if match:
+                    print(f"  Matched: '{match['title']}' on {match['date']} — deleting.")
+                    delete_event(match)
+
+                    try:
+                        service = get_calendar_service()
+                        search_time_min = (datetime.datetime.utcnow() - datetime.timedelta(days=365)).isoformat() + "Z"
+                        search_time_max = (datetime.datetime.utcnow() + datetime.timedelta(days=365)).isoformat() + "Z"
+
+                        clean_title = re.sub(r'[\r\n\t]+', ' ', match['title']).strip()
+                        clean_title = re.sub(r'\s+', ' ', clean_title)
+
+                        existing_events = service.events().list(
+                            calendarId='primary',
+                            timeMin=search_time_min,
+                            timeMax=search_time_max,
+                            q=clean_title,
+                            singleEvents=True
+                        ).execute()
+
+                        deleted = False
+                        for existing in existing_events.get('items', []):
+                            if existing.get('summary', '').strip().lower() == clean_title.lower():
+                                service.events().delete(calendarId='primary', eventId=existing['id']).execute()
+                                print(f"  [GOOGLE CALENDAR] Deleted cancelled event: '{existing['summary']}'")
+                                deleted = True
+
+                        if not deleted:
+                            print(f"  [GOOGLE CALENDAR] No matching event found to delete.")
+
                     except Exception as e:
                         print(f"  [GOOGLE CALENDAR ERROR] {e}")
-            else:
-                # No confident match found — add as new entry but flag it
-                print("  No existing event matched — adding as new entry (flagged)")
-                for date in result["dates"]:
-                    entry = {
-                        "title":       f"[POSSIBLY RESCHEDULED] {result['event']}",
-                        "date":        date,
-                        "from_time":   result["from_time"],
-                        "to_time":     result["to_time"],
-                        "venue":       result["venue"],
-                        "link":        result.get("link"),
-                        "status":      "reschedule"
-                    }
-                    add_event(entry)
 
-            print()
-            print("ANNOUNCEMENT ACTIONS:")
-            save_announcement(
-                sender_email = sender_email,
-                subject      = subject,
-                description  = result.get("description") or f"Event '{result['event']}' has been rescheduled."
-            )
+                else:
+                    print("  No existing event matched for cancellation.")
 
-        # ==================================================
-        # HANDLE: CANCELLED EVENT → Delete from calendar.json
-        # ==================================================
+                print()
+                print("ANNOUNCEMENT ACTIONS:")
+                save_announcement(
+                    sender_email = sender_email,
+                    subject      = subject,
+                    description  = result.get("description")
+                )
+            
+            # ==================================================
+            # HANDLE: ANNOUNCEMENT → Save to announcements.json
+            # NOT added to calendar
+            # ==================================================
 
-        elif result["type"] == "cancellation":
+            elif result["type"] == "announcement":
+                print("ANNOUNCEMENT — not added to calendar.")
+                print(f"Summary  : {result.get('description')}")
+                print()
+                print("ANNOUNCEMENT ACTIONS:")
+                save_announcement(
+                    sender_email = sender_email,
+                    subject      = subject,
+                    description  = result.get("description")
+                )
 
-            print("CANCELLATION DETECTED — searching calendar for matching event...")
-
-            clean_event_name = re.sub(r'[\r\n\t]+', ' ', result["event"]).strip()
-            clean_event_name = re.sub(r'\s+', ' ', clean_event_name)
-            match = find_matching_event(
-                event_name = clean_event_name,
-                old_dates  = result["old_dates"]
-            )
-
-            print()
-            print("CALENDAR ACTIONS:")
-
-            if match:
-                print(f"  Matched: '{match['title']}' on {match['date']} — deleting.")
-                delete_event(match)
-
-                # Delete from Google Calendar too
-                try:
-                    service = get_calendar_service()
-                    search_time_min = (datetime.datetime.utcnow() - datetime.timedelta(days=365)).isoformat() + "Z"
-                    search_time_max = (datetime.datetime.utcnow() + datetime.timedelta(days=365)).isoformat() + "Z"
-
-                    # Clean title — remove newlines and extra spaces before searching
-                    clean_title = re.sub(r'[\r\n\t]+', ' ', match['title']).strip()
-                    clean_title = re.sub(r'\s+', ' ', clean_title)
-
-                    existing_events = service.events().list(
-                        calendarId='primary',
-                        timeMin=search_time_min,
-                        timeMax=search_time_max,
-                        q=clean_title,
-                        singleEvents=True
-                    ).execute()
-
-                    deleted = False
-                    for existing in existing_events.get('items', []):
-                            if existing.get('summary', '').strip().lower() == clean_title.lower():                        service.events().delete(calendarId='primary', eventId=existing['id']).execute()
-                            print(f"  [GOOGLE CALENDAR] Deleted cancelled event: '{existing['summary']}'")
-                            deleted = True
-
-                    if not deleted:
-                        print(f"  [GOOGLE CALENDAR] No matching event found to delete.")
-
-                except Exception as e:
-                    print(f"  [GOOGLE CALENDAR ERROR] {e}")
+            # ==================================================
+            # HANDLE: UNKNOWN (SLM parse failure)
+            # ==================================================
 
             else:
-                print("  No existing event matched for cancellation.")
-                
+                print("UNKNOWN TYPE — could not process this email.")
+
             print()
-            print("ANNOUNCEMENT ACTIONS:")
-            save_announcement(
-                sender_email = sender_email,
-                subject      = subject,
-                description  = result.get("description")
-            )
-            existing_events = service.events().list(
-            calendarId='primary',
-            timeMin=search_time_min,
-            timeMax=search_time_max,
-            q=match['title'],
-            singleEvents=True
-            ).execute()
-
-        
-        # ==================================================
-        # HANDLE: ANNOUNCEMENT → Save to announcements.json
-        # NOT added to calendar
-        # ==================================================
-
-        elif result["type"] == "announcement":
-            print("ANNOUNCEMENT — not added to calendar.")
-            print(f"Summary  : {result.get('description')}")
-            print()
-            print("ANNOUNCEMENT ACTIONS:")
-            save_announcement(
-                sender_email = sender_email,
-                subject      = subject,
-                description  = result.get("description")
-            )
-
-        # ==================================================
-        # HANDLE: UNKNOWN (SLM parse failure)
-        # ==================================================
-
-        else:
-            print("UNKNOWN TYPE — could not process this email.")
-
-        print()
-        print("=" * 50)
+            print("=" * 50)
 
 # =========================================================
 # LOGOUT  [COMMENTED OUT — PROTOTYPE MODE]
