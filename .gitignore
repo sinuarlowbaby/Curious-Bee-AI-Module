@@ -5,6 +5,7 @@
 **/.env
 **/.env.*
 !**/.env.example
+
 credential.json
 credentials.json
 **/credential.json
@@ -19,8 +20,10 @@ token.json
 # Python bytecode and caches
 __pycache__/
 **/__pycache__/
+*.pyc
 *.py[cod]
 *$py.class
+
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
@@ -44,17 +47,20 @@ app.log
 
 # Local runtime data and generated outputs
 
-
-
 # Databases and vector stores
 *.db
 *.sqlite
 *.sqlite3
 *.db-journal
+
+# ChromaDB
+*_chroma_db/
+**/chroma_db/
 chroma_db/
 researchhub_chroma_db/
-**/chroma_db/
 **/researchhub_chroma_db/
+
+# Qdrant
 qdrant_storage/
 **/qdrant_storage/
 
@@ -77,6 +83,9 @@ dist/
 # IDE and OS files
 .vscode/
 .idea/
+
+pyrefly.toml
+
 *.swp
 *.swo
 .DS_Store
