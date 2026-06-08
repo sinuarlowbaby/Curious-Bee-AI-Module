@@ -1,0 +1,50 @@
+[
+    {
+        "title": "Seminar on Artificial Intelligence and Future Technologies",
+        "date": "2026-06-14",
+        "start_time": "10:00 AM",
+        "end_time": null,
+        "venue": "Seminar Hall",
+        "department": "Department of Computer Science and Engineering",
+        "organizer": "Dr. A. Ramesh",
+        "category": "Other",
+        "description": "Dear All, Greetings!!! You are cordially invited to attend the *Seminar on Artificial Intelligence and Future Technologies* organized by the Department of Computer Science and Engineering, SRMIST.",
+        "registration_link": null
+    },
+    {
+        "title": "Seminar on Artificial Intelligence and Future Technologies",
+        "date": "2026-06-14",
+        "start_time": "10:00 AM",
+        "end_time": null,
+        "venue": "Seminar Hall",
+        "department": "Department of Computer Science and Engineering",
+        "organizer": "Dr. A. Ramesh",
+        "category": "Other",
+        "description": "Dear All, Greetings!!! You are cordially invited to attend the *Seminar on Artificial Intelligence and Future Technologies* organized by the Department of Computer Science and Engineering, SRMIST.",
+        "registration_link": null
+    },
+    {
+        "title": "Technovanza 2026",
+        "date": "2026-07-10",
+        "start_time": "09:00 AM",
+        "end_time": null,
+        "venue": "Main Auditorium",
+        "department": "SRMIST",
+        "organizer": "Dr. P. Venkatesh",
+        "category": "Symposiums",
+        "description": "Dear All, Greetings!!! We are pleased to invite you to *Technovanza 2026*, the National Level Technical Symposium organized by SRMIST.",
+        "registration_link": null
+    },
+    {
+        "title": "Technovanza 2026",
+        "date": "2026-07-12",
+        "start_time": "09:00 AM",
+        "end_time": null,
+        "venue": "Main Auditorium",
+        "department": "SRMIST",
+        "organizer": "Dr. P. Venkatesh",
+        "category": "Symposiums",
+        "description": "Dear All, Greetings!!! We are pleased to invite you to *Technovanza 2026*, the National Level Technical Symposium organized by SRMIST.",
+        "registration_link": null
+    }
+]
