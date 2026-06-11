@@ -1,0 +1,172 @@
+[
+    {
+        "title": "Guest Lecture on Quantum Computing",
+        "date": "2026-07-05",
+        "from_time": "02:00 PM",
+        "to_time": null,
+        "venue": null,
+        "link": null,
+        "status": "schedule"
+    },
+    {
+        "title": "Department Technical Events 2026",
+        "date": "2026-08-12",
+        "from_time": "10:52 AM",
+        "to_time": null,
+        "venue": "Computer Lab 1",
+        "link": null,
+        "status": "schedule"
+    },
+    {
+        "title": "Department Technical Events 2026",
+        "date": "2026-08-13",
+        "from_time": "10:52 AM",
+        "to_time": null,
+        "venue": "Computer Lab 1",
+        "link": null,
+        "status": "schedule"
+    },
+    {
+        "title": "Department Technical Events 2026",
+        "date": "2026-08-14",
+        "from_time": "10:52 AM",
+        "to_time": null,
+        "venue": "Computer Lab 1",
+        "link": null,
+        "status": "schedule"
+    },
+    {
+        "title": "Department Technical Events 2026",
+        "date": "2026-08-15",
+        "from_time": "10:52 AM",
+        "to_time": null,
+        "venue": "Computer Lab 1",
+        "link": null,
+        "status": "schedule"
+    },
+    {
+        "title": "Hybrid Guest Lecture on VLSI Design",
+        "date": "2027-05-15",
+        "from_time": "02:00 PM",
+        "to_time": "04:00 PM",
+        "reporting_time": null,
+        "venue": "ECE Seminar Hall, Northstar University, Chandigarh*",
+        "link": null,
+        "status": "schedule"
+    },
+    {
+        "title": "Coding Competition",
+        "date": "2026-08-12",
+        "from_time": "10:00 AM",
+        "to_time": "12:30 PM",
+        "reporting_time": null,
+        "venue": "Computer Lab 1",
+        "link": null,
+        "status": "schedule",
+        "parent_event": "Coding Competition"
+    },
+    {
+        "title": "Robotics Workshop",
+        "date": "2026-08-13",
+        "from_time": "2:00 PM",
+        "to_time": "5:00 PM",
+        "reporting_time": null,
+        "venue": "Mechanical Block Seminar Hall",
+        "link": null,
+        "status": "schedule",
+        "parent_event": "Coding Competition"
+    },
+    {
+        "title": "Project Exhibition",
+        "date": "2026-08-14",
+        "from_time": "9:30 AM",
+        "to_time": "4:00 PM",
+        "reporting_time": null,
+        "venue": "Main Auditorium",
+        "link": null,
+        "status": "schedule",
+        "parent_event": "Coding Competition"
+    },
+    {
+        "title": "Cyber Security Awareness Session",
+        "date": "2026-08-15",
+        "from_time": "11:00 AM",
+        "to_time": "1:00 PM",
+        "reporting_time": null,
+        "venue": "Seminar Hall 2",
+        "link": null,
+        "status": "schedule",
+        "parent_event": "Coding Competition"
+    },
+    {
+        "title": "Robotics Workshop",
+        "date": "2026-08-17",
+        "from_time": "Venue: Mechanical Block Seminar Hall",
+        "to_time": null,
+        "reporting_time": null,
+        "venue": "Mechanical Block Seminar Hall",
+        "link": null,
+        "status": "schedule",
+        "parent_event": "Coding Competition"
+    },
+    {
+        "title": "Project Exhibition",
+        "date": "2026-08-18",
+        "from_time": "9:30 AM",
+        "to_time": "4:00 PM",
+        "reporting_time": null,
+        "venue": "",
+        "link": null,
+        "status": "schedule",
+        "parent_event": "Coding Competition"
+    },
+    {
+        "title": "Date: 19 August 2026",
+        "date": "2026-08-19",
+        "from_time": "11:00 AM",
+        "to_time": "1:00 PM",
+        "reporting_time": null,
+        "venue": "Seminar Hall 2",
+        "link": null,
+        "status": "schedule",
+        "parent_event": "Coding Competition"
+    },
+    {
+        "title": "National Level Technical Symposium",
+        "date": "2026-06-08",
+        "from_time": "1:42 PM",
+        "to_time": null,
+        "venue": "Main Auditorium, SRMIST, Kattankulathur",
+        "link": null,
+        "status": "reschedule"
+    },
+    {
+        "title": "National Level Technical Symposium",
+        "date": "2026-06-01",
+        "from_time": "1:42 PM",
+        "to_time": null,
+        "venue": "Main Auditorium, SRMIST, Kattankulathur",
+        "link": null,
+        "status": "reschedule"
+    },
+    {
+        "title": "National Robotics League 2026",
+        "date": "2026-11-21",
+        "from_time": "09:00 AM",
+        "to_time": null,
+        "reporting_time": null,
+        "venue": "Mechanical Workshop Arena, Mech Academy, Bengaluru*",
+        "link": null,
+        "status": "schedule"
+    },
+    {
+        "title": "National Robotics League 2026",
+        "date": "2026-11-23",
+        "from_time": "09:00 AM",
+        "to_time": null,
+        "reporting_time": null,
+        "venue": "Mechanical Workshop Arena, Mech Academy, Bengaluru*",
+        "link": null,
+        "status": "schedule"
+    }
+]

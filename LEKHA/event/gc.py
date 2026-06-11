@@ -68,7 +68,8 @@ ANNOUNCEMENTS_FILE  = "announcements.json"
 AUTHORIZED_SENDERS = [
     "dean@gmail.com",
     "hod@gmail.com",
-    "lekhalokare.28@gmail.com"
+    "lekhalokare.28@gmail.com",
+    "yashwanthkumar0812@gmail.com"
 ]
 
 # =========================================================
